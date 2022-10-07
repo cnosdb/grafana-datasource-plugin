@@ -1,5 +1,5 @@
 {
-  "name": "cnosdb-cnosdb",
+  "name": "cnosdb-grafana-datasource",
   "version": "1.0.0",
   "description": "A grafana data source plugin for CnosDB.",
   "scripts": {
@@ -10,15 +10,27 @@
     "sign": "grafana-toolkit plugin:sign",
     "start": "yarn watch"
   },
-  "author": false,
+  "author": {
+    "name": "cnosdb",
+    "url": "https://github.com/cnosdb/cnosdb"
+  },
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/data": "latest",
+    "@grafana/runtime": "latest",
     "@grafana/toolkit": "latest",
     "@grafana/ui": "latest",
     "@types/lodash": "latest",
     "@testing-library/jest-dom": "5.4.0",
-    "@testing-library/react": "^10.0.2"
+    "@testing-library/react": "^10.0.2",
+    "@types/debounce-promise": "3.1.4"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "debounce-promise": "3.1.2"
+  },
+  "resolutions": {
+    "rxjs": "7.5.7"
   },
   "engines": {
     "node": ">=14"

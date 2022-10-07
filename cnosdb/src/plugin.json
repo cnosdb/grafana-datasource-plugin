@@ -1,14 +1,16 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "cnosdb",
-  "id": "cnosdb-cnosdb",
+  "name": "CnosDB",
+  "id": "cnosdb-grafana-datasource",
   "metrics": true,
+  "backend": false,
+  "executable": "gpx_cnosdb",
   "info": {
     "description": "A grafana data source plugin for CnosDB.",
     "author": {
-      "name": false,
-      "url": "www.cnosdb.com"
+      "name": "cnosdb",
+      "url": "https://github.com/cnosdb/cnosdb"
     },
     "keywords": [
       "cnosdb",
