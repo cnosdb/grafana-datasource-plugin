@@ -1,13 +1,11 @@
 import {lastValueFrom, of} from 'rxjs';
 import {map} from 'rxjs/operators';
 
-import {DataSourceInstanceSettings, MetricFindValue} from "@grafana/data";
-import {DataSourceWithBackend, getBackendSrv, getTemplateSrv, TemplateSrv} from '@grafana/runtime';
-import {BackendSrvRequest} from "@grafana/runtime/services/backendSrv";
+import {DataSourceInstanceSettings, DataFrameJSON, MetricFindValue} from "@grafana/data";
+import {BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getTemplateSrv, TemplateSrv} from '@grafana/runtime';
 
 import {CnosDataSourceOptions, CnosQuery} from './types';
 import {each, findIndex, zip} from "lodash";
-import {DataFrameJSON} from "@grafana/data/dataframe/DataFrameJSON";
 
 export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSourceOptions> {
   datasourceUid: string;
@@ -24,7 +22,6 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
     const interpolated = this.templateSrv.replace(query, undefined, 'regex');
     return lastValueFrom(this._fetchMetric(interpolated)).then((results) => {
       let ret = this._parse(query, results);
-      console.log("Metric query final", ret);
       return ret;
     });
   }
@@ -49,13 +46,11 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
         }],
       },
     };
-    console.log("Metric query request", req);
 
     return getBackendSrv()
       .fetch(req)
       .pipe(
         map((result: any) => {
-          console.log("Metric query result", result);
           const {data} = result;
           return data;
         }),
@@ -104,27 +99,27 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
         ret.add(v.toString())
       });
     } else if (query.indexOf('-- tag;\nDESCRIBE TABLE') === 0) {
-      let indexes = this._parseSchema(frame, ['FIELDNAME', 'ISTAG']);
+      let indexes = this._parseSchema(frame, ['COLUMN_NAME', 'COLUMN_TYPE']);
       if (indexes.length !== 2) {
         return [];
       }
-      each(zip(values[indexes[0]], values[indexes[1]]), ([col, isTag]) => {
-        if (isTag === true) {
+      each(zip(values[indexes[0]], values[indexes[1]]), ([col, typ]) => {
+        if (typ === "TAG") {
           ret.add(col.toString());
         }
       });
     } else if (query.indexOf('-- field;\nDESCRIBE TABLE') === 0) {
-      let indexes = this._parseSchema(frame, ['FIELDNAME', 'ISTAG']);
+      let indexes = this._parseSchema(frame, ['COLUMN_NAME', 'COLUMN_TYPE']);
       if (indexes.length !== 2) {
         return [];
       }
-      each(zip(values[indexes[0]], values[indexes[1]]), ([col, isTag]) => {
-        if (isTag === false) {
+      each(zip(values[indexes[0]], values[indexes[1]]), ([col, typ]) => {
+        if (typ === "FIELD") {
           ret.add(col.toString());
         }
       });
     } else {
-      console.log('No matches for query', query);
+      console.log('[Error] No matches for query', query);
     }
 
     return Array.from(ret).map((v) => ({text: v}));

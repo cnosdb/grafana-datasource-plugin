@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -34,20 +35,29 @@ var (
 
 // NewCnosDatasource creates a new datasource instance.
 func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	var jsonData map[string]string
-	if err := json.Unmarshal(instanceSettings.JSONData, &jsonData); err != nil {
-		return nil, err
-	}
-
 	log.DefaultLogger.Info(fmt.Sprintf("Building datasource: URL: '%s', db: '%s'",
 		instanceSettings.URL, instanceSettings.Database))
+
+	// Check custom arguments
+	auth, exists := instanceSettings.DecryptedSecureJSONData["auth"]
+	if !exists {
+		return nil, fmt.Errorf("cannot get secure json data 'auth'")
+	}
+
+	opts, err := instanceSettings.HTTPClientOptions()
+	if err != nil {
+		return nil, fmt.Errorf("http client options: %w", err)
+	}
+	httpClient, err := httpclient.New(opts)
+	if err != nil {
+		return nil, fmt.Errorf("httpclient new: %w", err)
+	}
 
 	return &CnosDatasource{
 		url:      instanceSettings.URL,
 		database: instanceSettings.Database,
-		client: http.Client{
-			Timeout: 10 * time.Second,
-		},
+		auth:     auth,
+		client:   httpClient,
 	}, nil
 }
 
@@ -56,8 +66,9 @@ func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (ins
 type CnosDatasource struct {
 	url      string
 	database string
+	auth     string
 
-	client http.Client
+	client *http.Client
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
@@ -65,7 +76,6 @@ type CnosDatasource struct {
 // be disposed and a new one will be created using NewCnosDatasource factory function.
 func (d *CnosDatasource) Dispose() {
 	// Clean up datasource instance resources.
-	log.DefaultLogger.Info("TODO: Implement Dispose().")
 }
 
 // QueryData handles multiple queries and returns multiple responses.
@@ -73,8 +83,6 @@ func (d *CnosDatasource) Dispose() {
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (d *CnosDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	log.DefaultLogger.Info("CnosDB query", "request", req)
-
 	// Create response struct
 	response := backend.NewQueryDataResponse()
 
@@ -99,54 +107,37 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 
 	response := backend.DataResponse{}
 
-	auth, exists := queryContext.PluginContext.DataSourceInstanceSettings.DecryptedSecureJSONData["auth"]
-	if !exists {
-		response.Error = fmt.Errorf("cannot get secure json data 'auth'")
-		return response
-	}
-
-	log.DefaultLogger.Debug("CnosDB query data", "auth", auth, "json", string(query.JSON))
-
 	var queryModel QueryModel
 	var err error
 	if err = json.Unmarshal(query.JSON, &queryModel); err != nil {
-		response.Error = err
-		return response
+		return backend.ErrDataResponse(backend.StatusValidationFailed, err.Error())
 	}
 	if err = queryModel.Introspect(); err != nil {
-		response.Error = err
-		return response
+		return backend.ErrDataResponse(backend.StatusValidationFailed, err.Error())
 	}
-
-	dbgQueryModel, _ := json.Marshal(queryModel)
-	log.DefaultLogger.Debug("CnosDB query model", "model", string(dbgQueryModel))
 
 	// Build sql
 	sql, err := queryModel.Build(queryContext)
 	if err != nil {
-		response.Error = err
-		return response
+		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
-	log.DefaultLogger.Debug("CnosDB query sql", "sql", sql)
 
 	req, err := http.NewRequestWithContext(ctx, "POST", d.url+"/api/v1/sql?db="+d.database, strings.NewReader(sql))
 	if err != nil {
-		response.Error = err
-		return response
+		return backend.ErrDataResponse(backend.StatusInternal, err.Error())
 	}
-	req.Header.Set("Authorization", "Basic "+auth)
+	req.Header.Set("Authorization", "Basic "+d.auth)
 	req.Header.Set("Accept", "application/json")
 
 	// Handle response
 	res, err := d.client.Do(req)
 	if err != nil {
-		response.Error = err
-		return response
+		return backend.ErrDataResponse(backend.StatusBadGateway, err.Error())
 	}
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			log.DefaultLogger.Warn("Failed to close response body", "err", err)
+			log.DefaultLogger.Debug("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -157,24 +148,20 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 		respError := fmt.Sprintf("CnosDB returned error status: %s", res.Status)
 		if err := json.NewDecoder(bytes.NewReader(respData)).Decode(&errMsg); err != nil {
 			log.DefaultLogger.Error("Failed to decode request jsonData", "err", err)
-			response.Error = fmt.Errorf("%s. ()Faield to parse response: %s", respError, err)
-			return response
+			errStr := fmt.Sprintf("%s. ()Faield to parse response: %s", respError, err)
+			return backend.ErrDataResponse(backend.StatusBadRequest, errStr)
 		}
-		response.Error = fmt.Errorf("%s. (%s)%s", respError, errMsg["error_code"], errMsg["error_message"])
-		return response
+		errStr := fmt.Sprintf("%s. (%s)%s", respError, errMsg["error_code"], errMsg["error_message"])
+		return backend.ErrDataResponse(backend.StatusBadRequest, errStr)
 	}
-
-	log.DefaultLogger.Debug("CnosDB query response", "response", string(respData))
 
 	var resRows []map[string]interface{}
 	var resultNotEmpty bool = true
 	if len(respData) > 0 {
 		if err := json.NewDecoder(bytes.NewReader(respData)).Decode(&resRows); err != nil {
 			log.DefaultLogger.Error("Failed to decode request jsonData", "err", err)
-			response.Error = err
-			return response
+			return backend.ErrDataResponse(backend.StatusInternal, err.Error())
 		}
-		log.DefaultLogger.Debug("CnosDB query response rows", "rows", resRows)
 	} else {
 		resultNotEmpty = false
 	}
@@ -193,8 +180,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 					parsedTime, err := ParseTimeString(val.(string))
 					if err != nil {
 						log.DefaultLogger.Error("Failed to convert to time", "err", err)
-						response.Error = err
-						return response
+						return backend.ErrDataResponse(backend.StatusInternal, err.Error())
 					}
 					timeArray[i] = parsedTime
 				} else {
@@ -261,8 +247,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 			if err != nil {
 				log.DefaultLogger.Error("Failed to convert to float", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to convert fill value to float", Severity: data.NoticeSeverityWarning})
-				response.Error = err
-				return response
+				return backend.ErrDataResponse(backend.StatusInternal, err.Error())
 			}
 		}
 		interval := ParseIntervalString(queryModel.Interval)
@@ -289,8 +274,6 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *CnosDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	log.DefaultLogger.Info("CnosDB check health", "request", req)
-
 	res, err := d.client.Get(d.url + "/api/v1/ping")
 	if err != nil {
 		return nil, err
