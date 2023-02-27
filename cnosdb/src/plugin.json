@@ -37,7 +37,7 @@
     "links": [
       {
         "name": "Website",
-        "url": "https://github.com/grafana/grafana-starter-datasource"
+        "url": "https://github.com/cnosdb/cnosdb"
       },
       {
         "name": "License",
