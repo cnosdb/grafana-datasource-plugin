@@ -240,7 +240,7 @@ export default class CnosQueryModel {
       query += selectText;
     }
 
-    query += ' FROM ' + this.getTable(interpolate) + ' WHERE ';
+    query += '\nFROM ' + this.getTable(interpolate) + '\nWHERE ';
     const conditions = map(target.tags, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
     });
@@ -264,17 +264,17 @@ export default class CnosQueryModel {
     }
 
     if (groupBySection.length) {
-      query += ' GROUP BY ' + groupBySection;
+      query += '\nGROUP BY ' + groupBySection;
     }
 
     if (target.orderByTime === 'DESC') {
-      query += ' ORDER BY time DESC';
+      query += '\nORDER BY time DESC';
     } else {
-      query += ' ORDER BY time ASC';
+      query += '\nORDER BY time ASC';
     }
 
     if (target.limit) {
-      query += ' LIMIT ' + target.limit;
+      query += '\nLIMIT ' + target.limit;
     }
 
     return query;

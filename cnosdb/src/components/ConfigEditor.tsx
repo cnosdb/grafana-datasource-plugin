@@ -86,13 +86,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const {options} = this.props;
     const {secureJsonFields} = options;
     const secureJsonData = (options.secureJsonData || {});
-
+    // TODO: use DataSourceHttpSettings to store TLS configs
     return (
       <>
         <div className="gf-form-group">
-          <div>
-            <h3 className="page-heading">CnosDB Connection</h3>
-          </div>
+          <h3 className="page-heading">CnosDB Connection</h3>
           <ConfigInput
             label="URL"
             htmlPrefix={`${this.htmlPrefix}-url`}
