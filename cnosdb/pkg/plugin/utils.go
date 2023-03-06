@@ -10,7 +10,8 @@ import (
 const (
 	LAYOUT_SECOND      = "2006-01-02T15:04:05"
 	LAYOUT_MILLISECOND = "2006-01-02T15:04:05.000"
-	LAYOUT_NANOSECOND  = "2006-01-02T15:04:05.000000"
+	LAYOUT_MICROSECOND = "2006-01-02T15:04:05.000000"
+	LAYOUT_NANOSECOND  = "2006-01-02T15:04:05.000000000"
 )
 
 func ParseTimeString(timeStr string) (time.Time, error) {
@@ -19,6 +20,8 @@ func ParseTimeString(timeStr string) (time.Time, error) {
 		return time.Parse(LAYOUT_SECOND, timeStr)
 	case len(LAYOUT_MILLISECOND):
 		return time.Parse(LAYOUT_MILLISECOND, timeStr)
+	case len(LAYOUT_MICROSECOND):
+		return time.Parse(LAYOUT_MICROSECOND, timeStr)
 	default:
 		return time.Parse(LAYOUT_NANOSECOND, timeStr)
 	}

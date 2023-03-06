@@ -1,6 +1,6 @@
 {
   "name": "cnosdb-grafana-datasource",
-  "version": "1.0.0",
+  "version": "0.2.1",
   "description": "A grafana data source plugin for CnosDB.",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
