@@ -44,7 +44,20 @@
         "url": "https://github.com/grafana/grafana-starter-datasource/blob/master/LICENSE"
       }
     ],
-    "screenshots": [],
+    "screenshots": [
+      {
+        "name": "Config Editor",
+        "path": "img/config_editor.png"
+      },
+      {
+        "name": "Query Editor",
+        "path": "img/query_editor.png"
+      },
+      {
+        "name": "Dashboard",
+        "path": "img/dashboard.png"
+      }
+    ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
