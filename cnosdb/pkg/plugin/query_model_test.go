@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cnosdb/cnosdb-grafana-datasource-backend/pkg/plugin"
+	"github.com/cnosdb/cnos-grafana-datasource-backend/pkg/plugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -57,7 +57,7 @@ func TestParseQuery2(t *testing.T) {
 	var requestJson = `
 {
     "datasource": {
-        "type": "cnosdb-grafana-datasource",
+        "type": "cnos-grafana-datasource",
         "uid": "Jn47KMS4z"
     },
     "datasourceId": 32,
@@ -110,7 +110,7 @@ func TestParseQuery2(t *testing.T) {
 func TestParseQuery3(t *testing.T) {
 	var requestJson = `
 {
-	"datasource":{"type":"cnosdb-grafana-datasource","uid":"jDXXYpI4k"},
+	"datasource":{"type":"cnos-grafana-datasource","uid":"jDXXYpI4k"},
 	"datasourceId":37,
 	"fill":"null",
 	"groupBy":[{"Type":"field","params":["10 seconds"],"type":"time"},

@@ -1,4 +1,4 @@
-module github.com/cnosdb/cnosdb-grafana-datasource-backend
+module github.com/cnosdb/cnos-grafana-datasource-backend
 
 go 1.19
 

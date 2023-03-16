@@ -13,7 +13,6 @@ export interface CnosDataSourceOptions extends DataSourceJsonData {
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface CnosSecureJsonData {
-  auth?: string;
   password?: string;
 }
 

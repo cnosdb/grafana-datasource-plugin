@@ -33,15 +33,21 @@ var (
 	_ instancemgmt.InstanceDisposer = (*CnosDatasource)(nil)
 )
 
+type CnosDataSourceOptions struct {
+	Url      string `json:"url"`
+	Database string `json:"database"`
+	User     string `json:"user"`
+}
+
 // NewCnosDatasource creates a new datasource instance.
 func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	log.DefaultLogger.Info(fmt.Sprintf("Building datasource: URL: '%s', db: '%s'",
-		instanceSettings.URL, instanceSettings.Database))
-
-	// Check custom arguments
-	auth, exists := instanceSettings.DecryptedSecureJSONData["auth"]
+	var jsonData CnosDataSourceOptions
+	if err := json.Unmarshal(instanceSettings.JSONData, &jsonData); err != nil {
+		return nil, fmt.Errorf("cannot get json data: '%s', please check CnosDB-Grafana-Plugin configurations.", err.Error())
+	}
+	password, exists := instanceSettings.DecryptedSecureJSONData["password"]
 	if !exists {
-		return nil, fmt.Errorf("cannot get secure json data 'auth'")
+		password = ""
 	}
 
 	opts, err := instanceSettings.HTTPClientOptions()
@@ -54,9 +60,10 @@ func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (ins
 	}
 
 	return &CnosDatasource{
-		url:      instanceSettings.URL,
-		database: instanceSettings.Database,
-		auth:     auth,
+		url:      jsonData.Url,
+		database: jsonData.Database,
+		user:     jsonData.User,
+		password: password,
 		client:   httpClient,
 	}, nil
 }
@@ -66,7 +73,8 @@ func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (ins
 type CnosDatasource struct {
 	url      string
 	database string
-	auth     string
+	user     string
+	password string
 
 	client *http.Client
 }
@@ -126,7 +134,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusInternal, err.Error())
 	}
-	req.Header.Set("Authorization", "Basic "+d.auth)
+	req.SetBasicAuth(d.user, d.password)
 	req.Header.Set("Accept", "application/json")
 
 	// Handle response
@@ -148,7 +156,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 		respError := fmt.Sprintf("CnosDB returned error status: %s", res.Status)
 		if err := json.NewDecoder(bytes.NewReader(respData)).Decode(&errMsg); err != nil {
 			log.DefaultLogger.Error("Failed to decode request jsonData", "err", err)
-			errStr := fmt.Sprintf("%s. ()Faield to parse response: %s", respError, err)
+			errStr := fmt.Sprintf("%s. ()Failed to parse response: %s", respError, err)
 			return backend.ErrDataResponse(backend.StatusBadRequest, errStr)
 		}
 		errStr := fmt.Sprintf("%s. (%s)%s", respError, errMsg["error_code"], errMsg["error_message"])

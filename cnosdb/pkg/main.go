@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/cnosdb/cnosdb-grafana-datasource-backend/pkg/plugin"
+	"github.com/cnosdb/cnos-grafana-datasource-backend/pkg/plugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
@@ -17,7 +17,7 @@ func main() {
 	// from Grafana to create different instances of CnosDatasource (per datasource
 	// ID). When datasource configuration changed Dispose method will be called and
 	// new datasource instance created using NewCnosDatasource factory.
-	if err := datasource.Manage("cnosdb-grafana-datasource", plugin.NewCnosDatasource, datasource.ManageOpts{}); err != nil {
+	if err := datasource.Manage("cnos-grafana-datasource", plugin.NewCnosDatasource, datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}

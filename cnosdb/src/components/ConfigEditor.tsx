@@ -1,10 +1,10 @@
 import {uniqueId} from 'lodash';
-import React, {ChangeEvent, PureComponent} from 'react';
-import {Base64} from 'js-base64';
+import React, {PureComponent} from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
-  onUpdateDatasourceOption,
+  onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import {InlineFormLabel, LegacyForms, LegacyInputStatus} from '@grafana/ui';
@@ -18,9 +18,10 @@ type ConfigInputProps = {
   htmlPrefix: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;
   value: string;
+  placeholder: string;
 };
 
-const ConfigInput = ({label, htmlPrefix, onChange, value}: ConfigInputProps): JSX.Element => {
+const ConfigInput = ({label, htmlPrefix, onChange, value, placeholder}: ConfigInputProps): JSX.Element => {
   return (
     <div className="gf-form-inline">
       <div className="gf-form">
@@ -28,7 +29,7 @@ const ConfigInput = ({label, htmlPrefix, onChange, value}: ConfigInputProps): JS
           {label}
         </InlineFormLabel>
         <div className="width-20">
-          <Input id={htmlPrefix} className="width-20" value={value || ''} onChange={onChange}/>
+          <Input id={htmlPrefix} className="width-20" value={value || ''} onChange={onChange} placeholder={placeholder} />
         </div>
       </div>
     </div>
@@ -52,40 +53,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
     updateDatasourcePluginResetOption(this.props, 'password');
   };
 
-  onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.onAuthChange(event.currentTarget.value, undefined);
-  };
-
-  onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.onAuthChange(undefined, event.currentTarget.value);
-  };
-
-  onAuthChange = (user?: string, password?: string) => {
-    const {onOptionsChange, options} = this.props;
-    const secureJsonData = (options.secureJsonData || {});
-
-    if (user === undefined) {
-      user = options.user;
-    }
-    if (password === undefined) {
-      password = secureJsonData.password ?? ''
-    }
-
-    onOptionsChange({
-      ...options,
-      user: user,
-      secureJsonData: {
-        ...options.secureJsonData,
-        auth: Base64.encode(user + ':' + password),
-        password: password,
-      },
-    });
-  };
-
   render() {
-    const {options} = this.props;
-    const {secureJsonFields} = options;
-    const secureJsonData = (options.secureJsonData || {});
+    const {secureJsonFields, jsonData} = this.props.options;
+    const secureJsonData = this.props.options.secureJsonData || {};
     // TODO: use DataSourceHttpSettings to store TLS configs
     return (
       <>
@@ -94,20 +64,23 @@ export class ConfigEditor extends PureComponent<Props, State> {
           <ConfigInput
             label="URL"
             htmlPrefix={`${this.htmlPrefix}-url`}
-            onChange={onUpdateDatasourceOption(this.props, 'url')}
-            value={options.url || ''}
+            onChange={onUpdateDatasourceJsonDataOption(this.props, 'url')}
+            value={jsonData.url || ''}
+            placeholder="http://127.0.0.1:31007"
           />
           <ConfigInput
             label="Database"
             htmlPrefix={`${this.htmlPrefix}-database`}
-            onChange={onUpdateDatasourceOption(this.props, 'database')}
-            value={options.database || ''}
+            onChange={onUpdateDatasourceJsonDataOption(this.props, 'database')}
+            value={jsonData.database || ''}
+            placeholder="database"
           />
           <ConfigInput
             label="User"
             htmlPrefix={`${this.htmlPrefix}-user`}
-            onChange={this.onUserChange}
-            value={options.user || ''}
+            onChange={onUpdateDatasourceJsonDataOption(this.props, 'user')}
+            value={jsonData.user ?? ''}
+            placeholder="root"
           />
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -116,10 +89,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 value={secureJsonData.password ?? ''}
                 label="Password"
                 aria-label="Password"
+                placeholder="password"
                 labelWidth={10}
                 inputWidth={20}
                 onReset={this.onResetPassword}
-                onChange={this.onPasswordChange}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'password')}
               />
             </div>
           </div>
