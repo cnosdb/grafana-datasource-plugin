@@ -43,7 +43,7 @@ type CnosDataSourceOptions struct {
 func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var jsonData CnosDataSourceOptions
 	if err := json.Unmarshal(instanceSettings.JSONData, &jsonData); err != nil {
-		return nil, fmt.Errorf("cannot get json data: '%s', please check CnosDB-Grafana-Plugin configurations.", err.Error())
+		return nil, fmt.Errorf("cannot get json data: '%s', please check CnosDB-Grafana-Plugin configurations", err.Error())
 	}
 	password, exists := instanceSettings.DecryptedSecureJSONData["password"]
 	if !exists {
@@ -164,7 +164,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 	}
 
 	var resRows []map[string]interface{}
-	var resultNotEmpty bool = true
+	var resultNotEmpty = true
 	if len(respData) > 0 {
 		if err := json.NewDecoder(bytes.NewReader(respData)).Decode(&resRows); err != nil {
 			log.DefaultLogger.Error("Failed to decode request jsonData", "err", err)

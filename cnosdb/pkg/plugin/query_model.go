@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-const DEFAULT_LIMIT = 1000
+const DefaultLimit = 1000
 
 type SelectItem struct {
 	Def    *QueryDefinition
@@ -208,7 +208,7 @@ func (query *QueryModel) renderOrderByTime() string {
 func (query *QueryModel) renderLimit() string {
 	limit := query.Limit
 	if limit == "" {
-		return fmt.Sprintf(" limit %d", DEFAULT_LIMIT)
+		return fmt.Sprintf(" limit %d", DefaultLimit)
 	}
 	return fmt.Sprintf(" limit %s", limit)
 }
