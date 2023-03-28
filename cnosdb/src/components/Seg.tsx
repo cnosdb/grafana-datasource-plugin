@@ -179,6 +179,7 @@ export const Seg = ({
 }: Props): JSX.Element => {
   const [isOpen, setOpen] = useState(false);
   if (!isOpen) {
+    // Normal state: show key(button) and value(input).
     const className = cx(defaultButtonClass, buttonClassName);
     return (
       <InlineLabel
@@ -192,6 +193,7 @@ export const Seg = ({
       </InlineLabel>
     );
   } else {
+    // Selective state: show filter(input) and value list(select)
     if (loadOptions !== undefined) {
       return (
         <Sel

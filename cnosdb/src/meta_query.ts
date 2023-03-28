@@ -6,7 +6,8 @@ export async function getAllTables(
   datasource: CnosDataSource
 ): Promise<string[]> {
   const data = await datasource.metricFindQuery('SHOW TABLES', datasource);
-  return data.map((item) => item.text);
+  const filterRegexp = filter === undefined ? '.*' : '.*' + filter + '.*';
+  return data.filter((item) => item.text.match(filterRegexp)).map((item) => item.text);
 }
 
 export async function getTagKeysFromTable(

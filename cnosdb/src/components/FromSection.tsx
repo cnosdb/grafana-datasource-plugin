@@ -20,7 +20,6 @@ export const FromSection = ({table, onChange, getTableOptions}: FromSectionProps
       allowCustomValue
       value={table ?? 'default_table'}
       loadOptions={loadFromOptions}
-      filterByLoadOptions
       onChange={(v) => {
         onChange(v.value);
       }}
