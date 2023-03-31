@@ -42,6 +42,8 @@ func ParseIntervalString(intervalStr string) time.Duration {
 		return 0
 	}
 
+	// TODO: support century decade year month week day (hour minute second) millisecond microsecond nanosecond
+	// TODO: support combined interval string (3 year 1 month; 3 year -1 month)
 	unit := strings.ToLower(seg[1])
 	if strings.HasPrefix(unit, "second") {
 		return time.Duration(num) * time.Second

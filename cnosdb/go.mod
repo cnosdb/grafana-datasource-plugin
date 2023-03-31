@@ -3,7 +3,7 @@ module github.com/cnosdb/cnos-grafana-datasource-backend
 go 1.19
 
 require (
-	github.com/grafana/grafana-plugin-sdk-go v0.154.0
+	github.com/grafana/grafana-plugin-sdk-go v0.156.0
 	github.com/stretchr/testify v1.8.2
 )
 
@@ -59,9 +59,9 @@ require (
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
 	github.com/urfave/cli v1.22.12 // indirect
-	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20210630183607-d20f26d13c79 // indirect
 	google.golang.org/grpc v1.41.0 // indirect

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -107,12 +108,6 @@ func (d *CnosDatasource) QueryData(ctx context.Context, req *backend.QueryDataRe
 }
 
 func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
-	defer func() {
-		if err := recover(); err != nil {
-			log.DefaultLogger.Error("Something went wrong", "err", err)
-		}
-	}()
-
 	response := backend.DataResponse{}
 
 	var queryModel QueryModel
@@ -149,7 +144,11 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 		}
 	}()
 
-	respData, _ := io.ReadAll(res.Body)
+	respData, err := io.ReadAll(res.Body)
+	if err != nil && !errors.Is(err, io.EOF) {
+		// Error while receiving request payload
+		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+	}
 
 	if res.StatusCode/100 != 2 {
 		var errMsg map[string]string
