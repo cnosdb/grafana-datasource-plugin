@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cnosdb/cnos-grafana-datasource-backend/pkg/plugin"
+	"github.com/cnosdb/cnos-cnosdb-datasource-backend/pkg/plugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )

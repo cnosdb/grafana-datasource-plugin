@@ -25,7 +25,9 @@ artifacts/
 work/
 ci/
 e2e-results/
-cnos-grafana-datasource*
+
+# Developing generated files
+cnos-cnosdb-datasource*
 
 # Editor
 .idea

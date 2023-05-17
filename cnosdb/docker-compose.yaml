@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   grafana:
-    container_name: 'cnos-grafana-datasource'
+    container_name: 'cnos-cnosdb-datasource'
     build:
       context: ./.config
       args:
@@ -10,5 +10,5 @@ services:
     ports:
       - 3000:3000/tcp
     volumes:
-      - ./dist:/var/lib/grafana/plugins/cnos-grafana-datasource
+      - ./dist:/var/lib/grafana/plugins/cnos-cnosdb-datasource
       - ./provisioning:/etc/grafana/provisioning

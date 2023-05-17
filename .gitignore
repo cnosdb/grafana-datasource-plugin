@@ -106,5 +106,5 @@ dist
 #
 .idea
 
-cnos-grafana-datasource-v*.zip
-cnos-grafana-datasource-v*.md5
+cnos-cnosdb-datasource-v*.zip
+cnos-cnosdb-datasource-v*.md5

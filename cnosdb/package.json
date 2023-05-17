@@ -1,5 +1,5 @@
 {
-  "name": "cnos-grafana-datasource",
+  "name": "cnos-cnosdb-datasource",
   "version": "0.3.2",
   "description": "A grafana data source plugin for CnosDB.",
   "scripts": {
