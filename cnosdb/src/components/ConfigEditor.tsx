@@ -29,7 +29,8 @@ const ConfigInput = ({label, htmlPrefix, onChange, value, placeholder}: ConfigIn
           {label}
         </InlineFormLabel>
         <div className="width-20">
-          <Input id={htmlPrefix} className="width-20" value={value || ''} onChange={onChange} placeholder={placeholder} />
+          <Input id={htmlPrefix} className="width-20" value={value || ''} onChange={onChange}
+                 placeholder={placeholder}/>
         </div>
       </div>
     </div>
@@ -66,7 +67,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             htmlPrefix={`${this.htmlPrefix}-url`}
             onChange={onUpdateDatasourceJsonDataOption(this.props, 'url')}
             value={jsonData.url || ''}
-            placeholder="http://127.0.0.1:31007"
+            placeholder="http://127.0.0.1:8902"
           />
           <ConfigInput
             label="Database"

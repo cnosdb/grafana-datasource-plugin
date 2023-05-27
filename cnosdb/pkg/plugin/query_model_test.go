@@ -2,15 +2,15 @@ package plugin_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/cnosdb/cnos-cnosdb-datasource-backend/pkg/plugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestParseQuery(t *testing.T) {
+func TestParseSimpleQuery(t *testing.T) {
 	var requestJson = `
 {
     "table": "mq",
@@ -45,15 +45,14 @@ func TestParseQuery(t *testing.T) {
 		t.Error(err)
 	}
 
-	sql, err := queryModel.Build(queryContext)
-	if err != nil {
-		t.Error(err)
-	}
-
-	fmt.Println(sql)
+	sql := queryModel.Build(queryContext)
+	assert.Equal(t, sql, "SELECT DATE_BIN(INTERVAL '10 minutes', time, TIMESTAMP '1970-01-01T00:00:00Z') AS time, avg(\"fa\")"+
+		" FROM mq WHERE time >= 1665360000000000000 AND time <= 1665964800000000000"+
+		" GROUP BY DATE_BIN(INTERVAL '10 minutes', time, TIMESTAMP '1970-01-01T00:00:00Z')"+
+		" ORDER BY time ASC LIMIT 1000")
 }
 
-func TestParseQuery2(t *testing.T) {
+func TestParseQueryComplex(t *testing.T) {
 	var requestJson = `
 {
     "datasource": {
@@ -63,6 +62,7 @@ func TestParseQuery2(t *testing.T) {
     "datasourceId": 32,
     "groupBy": [
         { "params": [ "10 minutes" ], "type": "time" },
+        { "params": [ "ta" ], "type": "tag" },
         { "params": [ "10" ], "type": "fill" }
     ],
     "intervalMs": 30000,
@@ -99,28 +99,29 @@ func TestParseQuery2(t *testing.T) {
 		t.Error(err)
 	}
 
-	sql, err := queryModel.Build(queryContext)
-	if err != nil {
-		t.Error(err)
-	}
-
-	fmt.Println(sql)
+	sql := queryModel.Build(queryContext)
+	assert.Equal(t, sql, "SELECT DATE_BIN(INTERVAL '10 minutes', time, TIMESTAMP '1970-01-01T00:00:00Z') AS time, avg(\"fa\") AS \"value\""+
+		" FROM ma WHERE time >= 1665360000000000000 AND time <= 1665964800000000000"+
+		" GROUP BY DATE_BIN(INTERVAL '10 minutes', time, TIMESTAMP '1970-01-01T00:00:00Z'), \"ta\""+
+		" ORDER BY time ASC LIMIT 1000")
 }
 
-func TestParseQuery3(t *testing.T) {
+func TestParseRawQuery(t *testing.T) {
 	var requestJson = `
 {
 	"datasource":{"type":"cnos-cnosdb-datasource","uid":"jDXXYpI4k"},
 	"datasourceId":37,
 	"fill":"null",
-	"groupBy":[{"Type":"field","params":["10 seconds"],"type":"time"},
-	{"params":["null"],"type":"fill"}],
-	"interval":"$__interval",
-	"intervalMs":2000,
+	"groupBy":[
+		{"params":["10 seconds"],"type":"time"},
+		{"params":["null"],"type":"fill"}
+	],
+	"interval":"1 minute",
+	"intervalMs":15000,
 	"key":"Q-841544f6-541e-45d7-afe4-accae7c5654f-0",
 	"maxDataPoints":1137,
 	"orderByTime":"ASC",
-	"queryText":"SELECT DATE_BIN(INTERVAL '10 seconds', time, TIMESTAMP '1970-01-01T00:00:00Z') AS time, avg(\"default_field\") FROM \"default_table\" WHERE $timeFilter GROUP BY time(time) ORDER BY time ASC",
+	"queryText":"Hello",
 	"rawQuery":true,
 	"refId":"A",
 	"select":[[{"params":["default_field"],"type":"field"},{"params":[],"type":"avg"}]],
@@ -145,10 +146,6 @@ func TestParseQuery3(t *testing.T) {
 		t.Error(err)
 	}
 
-	sql, err := queryModel.Build(queryContext)
-	if err != nil {
-		t.Error(err)
-	}
-
-	fmt.Println(sql)
+	sql := queryModel.Build(queryContext)
+	assert.Equal(t, sql, "Hello")
 }

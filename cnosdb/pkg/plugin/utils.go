@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -60,5 +61,10 @@ func typeof(value interface{}) string {
 	if value != nil {
 		return fmt.Sprintf("%T", value)
 	}
-	return "null"
+	return TypeNull
+}
+
+func CompileVariableRegexp(variableName string) *regexp.Regexp {
+	str := fmt.Sprintf("\\$\\{?%s\\}?", variableName)
+	return regexp.MustCompile(str)
 }

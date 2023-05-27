@@ -104,7 +104,7 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions }: TagProps): 
         console.error(err);
         return [];
       })
-      .then((tags) => [{ label: '-- remove tag filter --', value: undefined }, ...tags.map(toSelectableValue)]);
+      .then((tags) => [{ label: 'remove', value: undefined }, ...tags.map(toSelectableValue)]);
   };
 
   return (

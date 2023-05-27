@@ -7,6 +7,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
+var (
+	RegexpTimeFilter1 = CompileVariableRegexp("timeFilter")
+	RegexpTimeFilter2 = CompileVariableRegexp("__timeFilter")
+	RegexpInterval    = CompileVariableRegexp("__interval")
+)
+
+const (
+	GroupTypeTime = "time"
+	GroupTypeFill = "fill"
+)
+
 const DefaultLimit = 1000
 
 type SelectItem struct {
@@ -54,11 +65,11 @@ func (query *QueryModel) Introspect() error {
 		}
 	}
 	for _, s := range query.GroupBy {
-		if s.Type == "time" {
+		if s.Type == GroupTypeTime {
 			// from: GROUP BY time($interval)
 			// to: "GROUP BY time", "DATE_BIN(... $interval ...) AS time"
 			query.Interval = s.Params[0]
-		} else if s.Type == "fill" {
+		} else if s.Type == GroupTypeFill {
 			query.Fill = s.Params[0]
 		}
 		def, exists := renders[s.Type]
@@ -74,7 +85,7 @@ func (query *QueryModel) Introspect() error {
 	return nil
 }
 
-func (query *QueryModel) Build(queryContext *backend.QueryDataRequest) (string, error) {
+func (query *QueryModel) Build(queryContext *backend.QueryDataRequest) string {
 	var res string
 	if query.RawQuery && query.QueryText != "" {
 		res = query.QueryText
@@ -88,10 +99,13 @@ func (query *QueryModel) Build(queryContext *backend.QueryDataRequest) (string, 
 		res += query.renderLimit()
 	}
 
-	res = strings.ReplaceAll(res, "$timeFilter", query.renderTimeFilter(queryContext))
-	res = strings.ReplaceAll(res, "$__interval", query.Interval)
+	resBytes := []byte(res)
+	timeFilter := []byte(query.renderTimeFilter(queryContext))
+	resBytes = RegexpTimeFilter1.ReplaceAll(resBytes, timeFilter)
+	resBytes = RegexpTimeFilter2.ReplaceAll(resBytes, timeFilter)
+	resBytes = RegexpInterval.ReplaceAll(resBytes, []byte(query.Interval))
 
-	return res, nil
+	return string(resBytes)
 }
 
 func (query *QueryModel) renderTimeFilter(queryContext *backend.QueryDataRequest) string {
@@ -99,7 +113,7 @@ func (query *QueryModel) renderTimeFilter(queryContext *backend.QueryDataRequest
 	if timeRange == nil {
 		return ""
 	}
-	return fmt.Sprintf("time >= %d and time <= %d", timeRange.From.UnixNano(), timeRange.To.UnixNano())
+	return fmt.Sprintf("time >= %d AND time <= %d", timeRange.From.UnixNano(), timeRange.To.UnixNano())
 }
 
 func (query *QueryModel) renderSelectors(queryContext *backend.QueryDataRequest) string {
@@ -182,13 +196,11 @@ func (query *QueryModel) renderGroupBy(queryContext *backend.QueryDataRequest) s
 	groupBy := ""
 	for i, group := range query.GroupBy {
 		if i == 0 {
-			groupBy += " GROUP BY"
+			groupBy += " GROUP BY "
 		}
 
 		if i > 0 && group.Type != "fill" {
 			groupBy += ", "
-		} else {
-			groupBy += " "
 		}
 
 		groupBy += group.Render(query, queryContext, "")
@@ -208,7 +220,7 @@ func (query *QueryModel) renderOrderByTime() string {
 func (query *QueryModel) renderLimit() string {
 	limit := query.Limit
 	if limit == "" {
-		return fmt.Sprintf(" limit %d", DefaultLimit)
+		return fmt.Sprintf(" LIMIT %d", DefaultLimit)
 	}
-	return fmt.Sprintf(" limit %s", limit)
+	return fmt.Sprintf(" LIMIT %s", limit)
 }

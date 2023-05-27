@@ -16,13 +16,21 @@ export const RawQueryEditor = ({query, onChange, onRunQuery}: Props): JSX.Elemen
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
   const aliasElementId = useUniqueId();
 
-  const applyDelayedChangesAndRunQuery = () => {
+  const onRawQueryChange = (newQuery: string) => {
+    onChange({
+      ...query,
+      queryText: newQuery,
+    });
+    onRunQuery();
+  };
+
+  const onAliasChange = () => {
     onChange({
       ...query,
       alias: currentAlias,
     });
     onRunQuery();
-  };
+  }
 
   return (
     <div>
@@ -31,11 +39,8 @@ export const RawQueryEditor = ({query, onChange, onRunQuery}: Props): JSX.Elemen
         height="100px"
         language="sql"
         value={query.queryText ?? ''}
-        onBlur={(value) => {
-          if (value !== query.queryText) {
-            query.queryText = value;
-          }
-        }}
+        onBlur={onRawQueryChange}
+        onSave={onRawQueryChange}
         showMiniMap={false}
         showLineNumbers={true}
       />
@@ -46,7 +51,7 @@ export const RawQueryEditor = ({query, onChange, onRunQuery}: Props): JSX.Elemen
           type="text"
           spellCheck={false}
           placeholder="Naming pattern"
-          onBlur={applyDelayedChangesAndRunQuery}
+          onBlur={onAliasChange}
           onChange={(e) => {
             setCurrentAlias(e.currentTarget.value);
           }}

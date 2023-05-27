@@ -35,7 +35,7 @@ function getTemplateVariableOptions() {
   return (
     getTemplateSrv()
       .getVariables()
-      .map((v) => `/^$${v.name}$/`)
+      .map((v) => `\$\{${v.name}\}`)
   );
 }
 
@@ -185,7 +185,7 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
         <OrderByTimeSection
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC'}
           onChange={(v) => {
-            onAppliedChange({ ...query, orderByTime: v });
+            onAppliedChange({...query, orderByTime: v});
           }}
         />
       </SegmentSection>

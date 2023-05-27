@@ -40,6 +40,18 @@ type CnosDataSourceOptions struct {
 	User     string `json:"user"`
 }
 
+const (
+	ColumnTime = "time"
+
+	TypeFloat64 = "float64"
+	TypeString  = "string"
+	TypeBool    = "bool"
+	TypeNull    = "null"
+
+	FillPrevious = "previous"
+	FillNull     = "null"
+)
+
 // NewCnosDatasource creates a new datasource instance.
 func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var jsonData CnosDataSourceOptions
@@ -120,11 +132,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 	}
 
 	// Build sql
-	sql, err := queryModel.Build(queryContext)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
-	}
-
+	sql := queryModel.Build(queryContext)
 	req, err := http.NewRequestWithContext(ctx, "POST", d.url+"/api/v1/sql?db="+d.database, strings.NewReader(sql))
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusInternal, err.Error())
@@ -132,7 +140,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 	req.SetBasicAuth(d.user, d.password)
 	req.Header.Set("Accept", "application/json")
 
-	// Handle response
+	// Do HTTP request
 	res, err := d.client.Do(req)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadGateway, err.Error())
@@ -144,6 +152,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 		}
 	}()
 
+	// Handle HTTP response
 	respData, err := io.ReadAll(res.Body)
 	if err != nil && !errors.Is(err, io.EOF) {
 		// Error while receiving request payload
@@ -183,7 +192,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 	if resultNotEmpty {
 		for i, row := range resRows {
 			for col, val := range row {
-				if col == "time" {
+				if col == ColumnTime {
 					parsedTime, err := ParseTimeString(val.(string))
 					if err != nil {
 						log.DefaultLogger.Error("Failed to convert to time", "err", err)
@@ -204,13 +213,13 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 						valueArrayMap[col] = valArr
 					}
 					switch valType {
-					case "float64":
+					case TypeFloat64:
 						v := val.(float64)
 						valArr.float64Array[i] = &v
-					case "string":
+					case TypeString:
 						v := val.(string)
 						valArr.stringArray[i] = &v
-					case "bool":
+					case TypeBool:
 						v := val.(bool)
 						valArr.boolArray[i] = &v
 					default:
@@ -223,15 +232,15 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 
 	// Add fields.
 	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, timeArray),
+		data.NewField(ColumnTime, nil, timeArray),
 	)
 	for i, col := range columnArray {
 		switch columnTypes[i] {
-		case "float64":
+		case TypeFloat64:
 			frame.Fields = append(frame.Fields, data.NewField(col, nil, valueArrayMap[col].float64Array))
-		case "string":
+		case TypeString:
 			frame.Fields = append(frame.Fields, data.NewField(col, nil, valueArrayMap[col].stringArray))
-		case "bool":
+		case TypeBool:
 			frame.Fields = append(frame.Fields, data.NewField(col, nil, valueArrayMap[col].boolArray))
 		default:
 			log.DefaultLogger.Debug("Unexpected column type", "column", col)
@@ -240,13 +249,13 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 
 	// Resample if needed
 	if resultNotEmpty && queryModel.Fill != "" {
-		log.DefaultLogger.Debug("Fill detected, need Resample")
+		log.DefaultLogger.Debug("Fill detected, need Resample", "fill", queryModel.Fill)
 		var fillMode data.FillMode
 		var fillValue float64 = 0
 		switch strings.ToLower(queryModel.Fill) {
-		case "previous":
+		case FillPrevious:
 			fillMode = data.FillModePrevious
-		case "null":
+		case FillNull:
 			fillMode = data.FillModeNull
 		default:
 			fillMode = data.FillModeValue
