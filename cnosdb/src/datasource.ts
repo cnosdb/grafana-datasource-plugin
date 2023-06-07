@@ -80,8 +80,9 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
 
     const values: any[][] = frame.data.values;
 
+    const stdQuery = query.toUpperCase();
     const ret = new Set<string>();
-    if (query.indexOf('SHOW TABLES') === 0) {
+    if (stdQuery.indexOf('SHOW TABLES') === 0) {
       let indexes = this._parseSchema(frame, ['Table']);
       if (indexes.length !== 1) {
         return [];
@@ -89,7 +90,7 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
       each(values[indexes[0]], (v) => {
         ret.add(v.toString())
       });
-    } else if (query.indexOf('-- tag;\nDESCRIBE TABLE') === 0) {
+    } else if (stdQuery.indexOf('-- TAG;\nDESCRIBE TABLE') === 0) {
       let indexes = this._parseSchema(frame, ['COLUMN_NAME', 'COLUMN_TYPE']);
       if (indexes.length !== 2) {
         return [];
@@ -99,7 +100,7 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
           ret.add(col.toString());
         }
       });
-    } else if (query.indexOf('-- field;\nDESCRIBE TABLE') === 0) {
+    } else if (stdQuery.indexOf('-- FIELD;\nDESCRIBE TABLE') === 0) {
       let indexes = this._parseSchema(frame, ['COLUMN_NAME', 'COLUMN_TYPE']);
       if (indexes.length !== 2) {
         return [];
@@ -110,7 +111,14 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
         }
       });
     } else {
-      console.log('[Error] No matches for query', query);
+      // For customized query variable sql, there is only 1 column named 'value'.
+      let indexes = this._parseSchema(frame, ['value']);
+      if (indexes.length !== 1) {
+        return [];
+      }
+      each(values[indexes[0]], (v) => {
+        ret.add(v.toString())
+      });
     }
 
     return Array.from(ret).map((v) => ({text: v}));

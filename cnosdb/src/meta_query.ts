@@ -15,7 +15,7 @@ export async function getTagKeysFromTable(
   tags: TagItem[],
   datasource: CnosDataSource
 ): Promise<string[]> {
-  const data = await datasource.metricFindQuery('-- tag;\nDESCRIBE TABLE ' + table, datasource);
+  const data = await datasource.metricFindQuery('-- TAG;\nDESCRIBE TABLE ' + table, datasource);
   return data.map((item) => item.text);
 }
 
@@ -23,6 +23,6 @@ export async function getFieldNamesFromTable(
   table: string | undefined,
   datasource: CnosDataSource
 ): Promise<string[]> {
-  const data = await datasource.metricFindQuery('-- field;\nDESCRIBE TABLE ' + table, datasource);
+  const data = await datasource.metricFindQuery('-- FIELD;\nDESCRIBE TABLE ' + table, datasource);
   return data.map((item) => item.text);
 }

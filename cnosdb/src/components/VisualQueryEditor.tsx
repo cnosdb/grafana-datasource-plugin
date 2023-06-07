@@ -2,7 +2,6 @@ import {css} from '@emotion/css';
 import React, {useMemo} from 'react';
 
 import {GrafanaTheme2} from '@grafana/data';
-import {getTemplateSrv} from '@grafana/runtime';
 import {InlineLabel, SegmentSection, useStyles2} from '@grafana/ui';
 
 import {CnosDataSource} from '../datasource';
@@ -30,19 +29,6 @@ type Props = {
   onRunQuery: () => void;
   datasource: CnosDataSource;
 };
-
-function getTemplateVariableOptions() {
-  return (
-    getTemplateSrv()
-      .getVariables()
-      .map((v) => `\$\{${v.name}\}`)
-  );
-}
-
-// helper function to make it easy to call this from the widget-render-code
-function withTemplateVariableOptions(optionsPromise: Promise<string[]>): Promise<string[]> {
-  return optionsPromise.then((options) => [...getTemplateVariableOptions(), ...options]);
-}
 
 export const VisualQueryEditor = (props: Props): JSX.Element => {
   const styles = useStyles2((theme: GrafanaTheme2) => {
@@ -125,7 +111,7 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
           table={table}
           onChange={handleFromSectionChange}
           getTableOptions={(filter) =>
-            withTemplateVariableOptions(getAllTables(filter === '' ? undefined : filter, datasource))
+            getAllTables(filter === '' ? undefined : filter, datasource)
           }
         />
         <InlineLabel width="auto" className={styles.inlineLabel}>
