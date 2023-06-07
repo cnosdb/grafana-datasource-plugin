@@ -6,12 +6,20 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  MetricFindValue, ScopedVars,
+  MetricFindValue,
+  ScopedVars,
 } from "@grafana/data";
 import {BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getTemplateSrv, TemplateSrv} from '@grafana/runtime';
 
 import {CnosDataSourceOptions, CnosQuery, SelectItem, TagItem} from './types';
 import {cloneDeep, each, findIndex, zip} from "lodash";
+import {
+  customQuerySchema,
+  describeTableSchema,
+  MetaSchema,
+  showTablesSchema,
+  showTagValuesSchema
+} from "./meta_schemas";
 
 export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSourceOptions> {
   datasourceUid: string;
@@ -81,44 +89,53 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
     const values: any[][] = frame.data.values;
 
     const stdQuery = query.toUpperCase();
-    const ret = new Set<string>();
+    let ret = new Set<string>();
+
+    const parseResponse = (frame: DataFrameJSON, schema: MetaSchema[], col2Filter: (v: string) => boolean): Set<string> => {
+      let colIndexes: number[] = [];
+      for (let col of schema) {
+        let indexes = this._parseSchema(frame, col.keys);
+        if (indexes.length > 0) {
+          colIndexes = indexes;
+          break;
+        }
+      }
+      const ret = new Set<string>();
+      if (colIndexes.length === 0) {
+        return ret;
+      } else if (colIndexes.length === 1) {
+        each(values[colIndexes[0]], (v) => {
+          ret.add(v.toString())
+        });
+      } else if (colIndexes.length === 2) {
+        each(zip(values[colIndexes[0]], values[colIndexes[1]]), ([col1, col2]) => {
+          if (col2Filter(col2)) {
+            ret.add(col1.toString());
+          }
+        });
+      }
+
+      return ret;
+    }
+
+    const defaultFilter = (v: string) => true;
+
     if (stdQuery.indexOf('SHOW TABLES') === 0) {
-      let indexes = this._parseSchema(frame, ['Table']);
-      if (indexes.length !== 1) {
-        return [];
-      }
-      each(values[indexes[0]], (v) => {
-        ret.add(v.toString())
-      });
+      ret = parseResponse(frame, showTablesSchema, defaultFilter);
+
     } else if (stdQuery.indexOf('-- TAG;\nDESCRIBE TABLE') === 0) {
-      let indexes = this._parseSchema(frame, ['COLUMN_NAME', 'COLUMN_TYPE']);
-      if (indexes.length !== 2) {
-        return [];
-      }
-      each(zip(values[indexes[0]], values[indexes[1]]), ([col, typ]) => {
-        if (typ === "TAG") {
-          ret.add(col.toString());
-        }
-      });
+      ret = parseResponse(frame, describeTableSchema, (v) => v === "TAG");
+
     } else if (stdQuery.indexOf('-- FIELD;\nDESCRIBE TABLE') === 0) {
-      let indexes = this._parseSchema(frame, ['COLUMN_NAME', 'COLUMN_TYPE']);
-      if (indexes.length !== 2) {
-        return [];
-      }
-      each(zip(values[indexes[0]], values[indexes[1]]), ([col, typ]) => {
-        if (typ === "FIELD") {
-          ret.add(col.toString());
-        }
-      });
+      ret = parseResponse(frame, describeTableSchema, (v) => v === "FIELD");
+
+    } else if (stdQuery.indexOf('SHOW TAG VALUES') === 0) {
+      ret = parseResponse(frame, showTagValuesSchema, defaultFilter);
+
     } else {
       // For customized query variable sql, there is only 1 column named 'value'.
-      let indexes = this._parseSchema(frame, ['value']);
-      if (indexes.length !== 1) {
-        return [];
-      }
-      each(values[indexes[0]], (v) => {
-        ret.add(v.toString())
-      });
+      ret = parseResponse(frame, customQuerySchema, defaultFilter);
+
     }
 
     return Array.from(ret).map((v) => ({text: v}));

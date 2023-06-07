@@ -19,6 +19,16 @@ export async function getTagKeysFromTable(
   return data.map((item) => item.text);
 }
 
+export async function getTagValuesFromTable(
+  table: string | undefined,
+  tagKey: string,
+  tags: TagItem[],
+  datasource: CnosDataSource
+): Promise<string[]> {
+  const data = await datasource.metricFindQuery('SHOW TAG VALUES FROM ' + table + ' WITH KEY=' + tagKey, datasource);
+  return data.map((item) => item.text);
+}
+
 export async function getFieldNamesFromTable(
   table: string | undefined,
   datasource: CnosDataSource

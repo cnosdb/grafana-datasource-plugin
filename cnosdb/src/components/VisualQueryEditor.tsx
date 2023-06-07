@@ -15,7 +15,7 @@ import {
   removeGroupByPart,
   removeSelectPart,
 } from '../query_utils';
-import {getAllTables, getFieldNamesFromTable, getTagKeysFromTable} from '../meta_query';
+import {getAllTables, getFieldNamesFromTable, getTagKeysFromTable, getTagValuesFromTable} from '../meta_query';
 import {getNewGroupByPartOptions, getNewSelectPartOptions, makePartList} from './part_list_utils';
 import {FromSection} from './FromSection';
 import {TagsSection} from './TagsSection';
@@ -121,6 +121,11 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
           getTagKeyOptions={getTagKeys}
+          getTagValueOptions={(key: string) => {
+            return allTagKeys.then((keys) => {
+              return getTagValuesFromTable(table, key, filterTags(query.tags ?? [], keys), datasource);
+            });
+          }}
         />
       </SegmentSection>
       {selectLists.map((sel, index) => (

@@ -22,10 +22,11 @@ type Props = {
   tags: TagItem[];
   onChange: (tags: TagItem[]) => void;
   getTagKeyOptions: () => Promise<string[]>;
+  getTagValueOptions: (key: string) => Promise<string[]>;
 };
 
 // TODO Use <select/> to get Tag Value filters.
-export const TagsSection = ({tags, onChange, getTagKeyOptions}: Props): JSX.Element => {
+export const TagsSection = ({tags, onChange, getTagKeyOptions, getTagValueOptions}: Props): JSX.Element => {
   const onTagChange = (newTag: TagItem, index: number) => {
     const newTags = tags.map((tag, i) => {
       return index === i ? newTag : tag;
@@ -72,6 +73,7 @@ export const TagsSection = ({tags, onChange, getTagKeyOptions}: Props): JSX.Elem
             onTagRemove(i);
           }}
           getTagKeyOptions={getTagKeyOptions}
+          getTagValueOptions={getTagValueOptions}
         />
       ))}
       <AddButton
@@ -92,9 +94,10 @@ type TagProps = {
   onRemove: () => void;
   onChange: (tag: TagItem) => void;
   getTagKeyOptions: () => Promise<string[]>;
+  getTagValueOptions: (key: string) => Promise<string[]>;
 };
 
-const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions }: TagProps): JSX.Element => {
+const Tag = ({tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions}: TagProps): JSX.Element => {
   const operator = getOperator(tag);
   const condition = getCondition(tag, isFirst);
 
@@ -104,7 +107,11 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions }: TagProps): 
         console.error(err);
         return [];
       })
-      .then((tags) => [{ label: 'remove', value: undefined }, ...tags.map(toSelectableValue)]);
+      .then((tags) => [{label: 'remove', value: undefined}, ...tags.map(toSelectableValue)]);
+  };
+
+  const getTagValueSegmentOptions = () => {
+    return getTagValueOptions(tag.key).then((tags) => tags.map(toSelectableValue));
   };
 
   return (
@@ -114,7 +121,7 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions }: TagProps): 
           value={condition}
           loadOptions={loadConditionOptions}
           onChange={(v) => {
-            onChange({ ...tag, condition: v.value });
+            onChange({...tag, condition: v.value});
           }}
         />
       )}
@@ -123,11 +130,11 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions }: TagProps): 
         value={tag.key}
         loadOptions={getTagKeySegmentOptions}
         onChange={(v) => {
-          const { value } = v;
+          const {value} = v;
           if (value === undefined) {
             onRemove();
           } else {
-            onChange({ ...tag, key: value ?? '' });
+            onChange({...tag, key: value ?? ''});
           }
         }}
       />
@@ -135,15 +142,16 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions }: TagProps): 
         value={operator}
         loadOptions={loadOperatorOptions}
         onChange={(op) => {
-          onChange({ ...tag, operator: op.value });
+          onChange({...tag, operator: op.value});
         }}
       />
       <Seg
         allowCustomValue
         value={tag.value}
+        loadOptions={getTagValueSegmentOptions}
         onChange={(v) => {
           const value = v.value ?? '';
-          onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
+          onChange({...tag, value, operator: adjustOperatorIfNeeded(operator, value)});
         }}
       />
     </div>
