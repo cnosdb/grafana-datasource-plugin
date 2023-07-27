@@ -2,9 +2,9 @@
  * Cloned from grafana:v9.0.9/public/app/features/alerting/state/query_part.ts
  */
 
-import {clone, each, map} from 'lodash';
+import { clone, each, map } from 'lodash';
 
-import {SelectItem} from './types';
+import { SelectItem } from './types';
 
 export class QueryPartDef {
   type: string;
@@ -34,8 +34,8 @@ export class QueryPart {
     this.part = part;
     this.def = def;
     if (!this.def) {
-      console.log("[Error] Unexpected query part", part);
-      throw {message: 'Could not find query part ' + part.type};
+      console.log('[Error] Unexpected query part', part);
+      throw { message: 'Could not find query part ' + part.type };
     }
 
     part.params = part.params || clone(this.def.defaultParams);

@@ -25,11 +25,7 @@
       "name": "CnosDB",
       "url": "https://github.com/cnosdb/cnosdb"
     },
-    "keywords": [
-      "cnosdb",
-      "tsdb",
-      "timeseries"
-    ],
+    "keywords": ["cnosdb", "tsdb", "timeseries"],
     "logos": {
       "small": "img/logo.png",
       "large": "img/logo.png"

@@ -1,4 +1,4 @@
-import {DataQuery, DataSourceJsonData} from '@grafana/data';
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 /**
  * These are options configured for each DataSource instance

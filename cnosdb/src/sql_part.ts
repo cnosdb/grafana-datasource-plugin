@@ -2,7 +2,7 @@
  * Cloned from grafana:v9.0.9/public/app/angular/components/sql_part/sql_part.ts
  */
 
-import {clone} from 'lodash';
+import { clone } from 'lodash';
 
 export class SqlPartDef {
   type: string;
@@ -48,8 +48,8 @@ export class SqlPart {
     this.part = part;
     this.def = def;
     if (!this.def) {
-      console.log("[Error] Unexpected sql part", part);
-      throw {message: 'Could not find sql part ' + part.type};
+      console.log('[Error] Unexpected sql part', part);
+      throw { message: 'Could not find sql part ' + part.type };
     }
 
     this.datatype = part.datatype;

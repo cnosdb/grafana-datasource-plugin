@@ -1,10 +1,7 @@
-import {CnosDataSource} from './datasource';
-import {TagItem} from "./types";
+import { CnosDataSource } from './datasource';
+import { TagItem } from './types';
 
-export async function getAllTables(
-  filter: string | undefined,
-  datasource: CnosDataSource
-): Promise<string[]> {
+export async function getAllTables(filter: string | undefined, datasource: CnosDataSource): Promise<string[]> {
   const data = await datasource.metricFindQuery('SHOW TABLES', datasource);
   const filterRegexp = filter === undefined ? '.*' : '.*' + filter + '.*';
   return data.filter((item) => item.text.match(filterRegexp)).map((item) => item.text);
@@ -29,10 +26,7 @@ export async function getTagValuesFromTable(
   return data.map((item) => item.text);
 }
 
-export async function getFieldNamesFromTable(
-  table: string | undefined,
-  datasource: CnosDataSource
-): Promise<string[]> {
+export async function getFieldNamesFromTable(table: string | undefined, datasource: CnosDataSource): Promise<string[]> {
   const data = await datasource.metricFindQuery('-- FIELD;\nDESCRIBE TABLE ' + table, datasource);
   return data.map((item) => item.text);
 }

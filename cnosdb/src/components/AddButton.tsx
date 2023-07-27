@@ -1,9 +1,9 @@
 import React from 'react';
 
-import {SelectableValue} from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
-import {Seg} from './Seg';
-import {unwrap} from '../utils';
+import { Seg } from './Seg';
+import { unwrap } from '../utils';
 
 type Props = {
   loadOptions: () => Promise<SelectableValue[]>;
@@ -11,7 +11,7 @@ type Props = {
   onAdd: (v: string) => void;
 };
 
-export const AddButton = ({loadOptions, allowCustomValue, onAdd}: Props): JSX.Element => {
+export const AddButton = ({ loadOptions, allowCustomValue, onAdd }: Props): JSX.Element => {
   return (
     <Seg
       value="+"

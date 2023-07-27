@@ -1,10 +1,10 @@
 import React from 'react';
 
-import {AddButton} from "./AddButton";
-import {TagItem} from "../types";
-import {adjustOperatorIfNeeded, getCondition, getOperator, toSelectableValue} from "../utils";
-import {Seg} from "./Seg";
-import {SelectableValue} from "@grafana/data";
+import { AddButton } from './AddButton';
+import { TagItem } from '../types';
+import { adjustOperatorIfNeeded, getCondition, getOperator, toSelectableValue } from '../utils';
+import { Seg } from './Seg';
+import { SelectableValue } from '@grafana/data';
 
 type KnownOperator = '=' | '!=' | '<' | '>';
 const knownOperators: KnownOperator[] = ['=', '!=', '<', '>'];
@@ -26,7 +26,7 @@ type Props = {
 };
 
 // TODO Use <select/> to get Tag Value filters.
-export const TagsSection = ({tags, onChange, getTagKeyOptions, getTagValueOptions}: Props): JSX.Element => {
+export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptions }: Props): JSX.Element => {
   const onTagChange = (newTag: TagItem, index: number) => {
     const newTags = tags.map((tag, i) => {
       return index === i ? newTag : tag;
@@ -87,7 +87,6 @@ export const TagsSection = ({tags, onChange, getTagKeyOptions, getTagValueOption
   );
 };
 
-
 type TagProps = {
   tag: TagItem;
   isFirst: boolean;
@@ -97,7 +96,7 @@ type TagProps = {
   getTagValueOptions: (key: string) => Promise<string[]>;
 };
 
-const Tag = ({tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions}: TagProps): JSX.Element => {
+const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions }: TagProps): JSX.Element => {
   const operator = getOperator(tag);
   const condition = getCondition(tag, isFirst);
 
@@ -107,7 +106,7 @@ const Tag = ({tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOpt
         console.error(err);
         return [];
       })
-      .then((tags) => [{label: 'remove', value: undefined}, ...tags.map(toSelectableValue)]);
+      .then((tags) => [{ label: 'remove', value: undefined }, ...tags.map(toSelectableValue)]);
   };
 
   const getTagValueSegmentOptions = () => {
@@ -121,7 +120,7 @@ const Tag = ({tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOpt
           value={condition}
           loadOptions={loadConditionOptions}
           onChange={(v) => {
-            onChange({...tag, condition: v.value});
+            onChange({ ...tag, condition: v.value });
           }}
         />
       )}
@@ -130,11 +129,11 @@ const Tag = ({tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOpt
         value={tag.key}
         loadOptions={getTagKeySegmentOptions}
         onChange={(v) => {
-          const {value} = v;
+          const { value } = v;
           if (value === undefined) {
             onRemove();
           } else {
-            onChange({...tag, key: value ?? ''});
+            onChange({ ...tag, key: value ?? '' });
           }
         }}
       />
@@ -142,7 +141,7 @@ const Tag = ({tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOpt
         value={operator}
         loadOptions={loadOperatorOptions}
         onChange={(op) => {
-          onChange({...tag, operator: op.value});
+          onChange({ ...tag, operator: op.value });
         }}
       />
       <Seg
@@ -151,7 +150,7 @@ const Tag = ({tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOpt
         loadOptions={getTagValueSegmentOptions}
         onChange={(v) => {
           const value = v.value ?? '';
-          onChange({...tag, value, operator: adjustOperatorIfNeeded(operator, value)});
+          onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
         }}
       />
     </div>

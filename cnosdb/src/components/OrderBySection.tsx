@@ -1,16 +1,16 @@
-import {css, cx} from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import {SelectableValue} from '@grafana/data';
-import {Select} from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
 
-import {unwrap} from '../utils';
+import { unwrap } from '../utils';
 
 type Mode = 'ASC' | 'DESC';
 
 const OPTIONS: Array<SelectableValue<Mode>> = [
-  {label: 'ascending', value: 'ASC'},
-  {label: 'descending', value: 'DESC'},
+  { label: 'ascending', value: 'ASC' },
+  { label: 'descending', value: 'DESC' },
 ];
 
 const className = cx(
@@ -29,7 +29,7 @@ type Props = {
 // > Tag $tag: $column in TagOptions
 // > $order: > [ ascending, descending ]
 //   => sql: order by $tag $order
-export const OrderByTimeSection = ({value, onChange}: Props): JSX.Element => {
+export const OrderByTimeSection = ({ value, onChange }: Props): JSX.Element => {
   return (
     <>
       <Select<Mode>

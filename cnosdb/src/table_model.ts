@@ -2,9 +2,9 @@
  * Cloned from grafana:v9.0.9/public/app/core/table_model.ts
  */
 
-import {findIndex} from 'lodash';
+import { findIndex } from 'lodash';
 
-import {Column, QueryResultMeta, TableData} from '@grafana/data';
+import { Column, QueryResultMeta, TableData } from '@grafana/data';
 
 /**
  * Extends the standard Column class with variables that get
@@ -116,7 +116,7 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
   // Union of all non-value columns
   const columnsUnion = tableDataTables.slice().reduce((acc, series) => {
     series.columns.forEach((col) => {
-      const {text} = col;
+      const { text } = col;
       if (columnNames[text] === undefined) {
         columnNames[text] = acc.length;
         acc.push(col);

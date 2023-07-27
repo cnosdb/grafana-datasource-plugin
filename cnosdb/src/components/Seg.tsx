@@ -1,12 +1,12 @@
-import {css, cx} from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import debouncePromise from 'debounce-promise';
-import React, {useEffect, useState} from 'react';
-import {useAsyncFn} from 'react-use';
+import React, { useEffect, useState } from 'react';
+import { useAsyncFn } from 'react-use';
 
-import {SelectableValue} from '@grafana/data';
-import {AsyncSelect, InlineLabel, Input, Select} from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { AsyncSelect, InlineLabel, Input, Select } from '@grafana/ui';
 
-import {useShadowedState} from './use_shadowed_state';
+import { useShadowedState } from './use_shadowed_state';
 
 // this file is a simpler version of `grafana-ui / SegmentAsync.tsx`
 // with some changes:
@@ -66,7 +66,7 @@ type SelReloadProps = {
 // anything. we change this to just be the entered string.
 const formatCreateLabel = (v: string) => v;
 
-const SelReload = ({loadOptions, allowCustomValue, onChange, onClose}: SelReloadProps): JSX.Element => {
+const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelReloadProps): JSX.Element => {
   // here we rely on the fact that writing text into the <AsyncSelect/>
   // does not cause a re-render of the current react component.
   // this way there is only a single render-call,
@@ -74,7 +74,7 @@ const SelReload = ({loadOptions, allowCustomValue, onChange, onClose}: SelReload
   // if we want ot make this "re-render safe,
   // we will have to put the debounced call into an useRef,
   // and probably have an useEffect
-  const debouncedLoadOptions = debouncePromise(loadOptions, 1000, {leading: true});
+  const debouncedLoadOptions = debouncePromise(loadOptions, 1000, { leading: true });
   return (
     <div className={selectClass}>
       <AsyncSelect
@@ -98,7 +98,7 @@ type SelSingleLoadProps = {
   allowCustomValue?: boolean;
 };
 
-const SelSingleLoad = ({loadOptions, allowCustomValue, onChange, onClose}: SelSingleLoadProps): JSX.Element => {
+const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: SelSingleLoadProps): JSX.Element => {
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
 
   useEffect(() => {
@@ -121,11 +121,11 @@ const SelSingleLoad = ({loadOptions, allowCustomValue, onChange, onClose}: SelSi
   );
 };
 
-const Sel = ({loadOptions, filterByLoadOptions, allowCustomValue, onChange, onClose}: SelProps): JSX.Element => {
+const Sel = ({ loadOptions, filterByLoadOptions, allowCustomValue, onChange, onClose }: SelProps): JSX.Element => {
   // unfortunately <Segment/> and <SegmentAsync/> have somewhat different behavior,
   // so the simplest approach was to just create two separate wrapper-components
   return filterByLoadOptions ? (
-    <SelReload loadOptions={loadOptions} allowCustomValue={allowCustomValue} onChange={onChange} onClose={onClose}/>
+    <SelReload loadOptions={loadOptions} allowCustomValue={allowCustomValue} onChange={onChange} onClose={onClose} />
   ) : (
     <SelSingleLoad
       loadOptions={loadOptions}
@@ -142,7 +142,7 @@ type InpProps = {
   onClose: () => void;
 };
 
-const Inp = ({initialValue, onChange, onClose}: InpProps): JSX.Element => {
+const Inp = ({ initialValue, onChange, onClose }: InpProps): JSX.Element => {
   const [currentValue, setCurrentValue] = useShadowedState(initialValue);
 
   return (
@@ -218,7 +218,7 @@ export const Seg = ({
           }}
           onChange={(v) => {
             setOpen(false);
-            onChange({value: v, label: v});
+            onChange({ value: v, label: v });
           }}
         />
       );

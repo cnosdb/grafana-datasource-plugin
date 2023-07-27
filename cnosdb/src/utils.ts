@@ -1,9 +1,9 @@
-import {uniqueId} from 'lodash';
-import {useRef} from 'react';
+import { uniqueId } from 'lodash';
+import { useRef } from 'react';
 
-import {SelectableValue} from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
-import {TagItem} from './types';
+import { TagItem } from './types';
 
 function isRegex(text: string): boolean {
   return /^\/.*\/$/.test(text);
@@ -43,7 +43,7 @@ export function useUniqueId(): string {
 }
 
 export function toSelectableValue<T extends string>(t: T): SelectableValue<T> {
-  return {label: t, value: t};
+  return { label: t, value: t };
 }
 
 export function getOperator(tag: TagItem): string {

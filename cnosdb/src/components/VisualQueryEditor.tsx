@@ -1,11 +1,11 @@
-import {css} from '@emotion/css';
-import React, {useMemo} from 'react';
+import { css } from '@emotion/css';
+import React, { useMemo } from 'react';
 
-import {GrafanaTheme2} from '@grafana/data';
-import {InlineLabel, SegmentSection, useStyles2} from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
-import {CnosDataSource} from '../datasource';
-import {CnosQuery, TagItem} from '../types';
+import { CnosDataSource } from '../datasource';
+import { CnosQuery, TagItem } from '../types';
 import {
   addNewGroupByPart,
   addNewSelectPart,
@@ -15,13 +15,13 @@ import {
   removeGroupByPart,
   removeSelectPart,
 } from '../query_utils';
-import {getAllTables, getFieldNamesFromTable, getTagKeysFromTable, getTagValuesFromTable} from '../meta_query';
-import {getNewGroupByPartOptions, getNewSelectPartOptions, makePartList} from './part_list_utils';
-import {FromSection} from './FromSection';
-import {TagsSection} from './TagsSection';
-import {PartListSection} from './PartListSection';
-import {InputSection} from './InputSection';
-import {OrderByTimeSection} from "./OrderBySection";
+import { getAllTables, getFieldNamesFromTable, getTagKeysFromTable, getTagValuesFromTable } from '../meta_query';
+import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from './part_list_utils';
+import { FromSection } from './FromSection';
+import { TagsSection } from './TagsSection';
+import { PartListSection } from './PartListSection';
+import { InputSection } from './InputSection';
+import { OrderByTimeSection } from './OrderBySection';
 
 type Props = {
   query: CnosQuery;
@@ -34,13 +34,13 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
   const styles = useStyles2((theme: GrafanaTheme2) => {
     return {
       inlineLabel: css`
-      color: ${theme.colors.primary.text};
-    `,
+        color: ${theme.colors.primary.text};
+      `,
     };
   });
   const query = normalizeQuery(props.query);
-  const {datasource} = props;
-  const {table} = query;
+  const { datasource } = props;
+  const { table } = query;
 
   const allTagKeys = useMemo(() => {
     return getTagKeysFromTable(table, [], datasource).then((tags) => {
@@ -53,9 +53,7 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
       [
         'field_0',
         () => {
-          return table !== undefined
-            ? getFieldNamesFromTable(table, datasource)
-            : Promise.resolve([]);
+          return table !== undefined ? getFieldNamesFromTable(table, datasource) : Promise.resolve([]);
         },
       ],
     ]);
@@ -63,10 +61,7 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
   }, [table, query.select, datasource]);
 
   const getTagKeys = useMemo(() => {
-    return () =>
-      allTagKeys.then((keys) =>
-        getTagKeysFromTable(table, filterTags(query.tags ?? [], keys), datasource)
-      );
+    return () => allTagKeys.then((keys) => getTagKeysFromTable(table, filterTags(query.tags ?? [], keys), datasource));
   }, [table, query.tags, datasource, allTagKeys]);
 
   function filterTags(parts: TagItem[], allTagKeys: Set<string>): TagItem[] {
@@ -105,14 +100,12 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
   };
 
   return (
-    <div>
+    <div className="gf-form-group">
       <SegmentSection label="FROM" fill={false}>
         <FromSection
           table={table}
           onChange={handleFromSectionChange}
-          getTableOptions={(filter) =>
-            getAllTables(filter === '' ? undefined : filter, datasource)
-          }
+          getTableOptions={(filter) => getAllTables(filter === '' ? undefined : filter, datasource)}
         />
         <InlineLabel width="auto" className={styles.inlineLabel}>
           WHERE
@@ -167,7 +160,7 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
           placeholder="(optional)"
           value={query.limit?.toString()}
           onChange={(limit) => {
-            onAppliedChange({...query, limit});
+            onAppliedChange({ ...query, limit });
           }}
         />
         <InlineLabel width="auto" className={styles.inlineLabel}>
@@ -176,7 +169,7 @@ export const VisualQueryEditor = (props: Props): JSX.Element => {
         <OrderByTimeSection
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC'}
           onChange={(v) => {
-            onAppliedChange({...query, orderByTime: v});
+            onAppliedChange({ ...query, orderByTime: v });
           }}
         />
       </SegmentSection>

@@ -1,5 +1,5 @@
-import {lastValueFrom, Observable, of} from 'rxjs';
-import {map} from 'rxjs/operators';
+import { lastValueFrom, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import {
   DataFrameJSON,
@@ -8,18 +8,18 @@ import {
   DataSourceInstanceSettings,
   MetricFindValue,
   ScopedVars,
-} from "@grafana/data";
-import {BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getTemplateSrv, TemplateSrv} from '@grafana/runtime';
+} from '@grafana/data';
+import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import {CnosDataSourceOptions, CnosQuery, SelectItem, TagItem} from './types';
-import {cloneDeep, each, findIndex, zip} from "lodash";
+import { CnosDataSourceOptions, CnosQuery, SelectItem, TagItem } from './types';
+import { cloneDeep, each, findIndex, zip } from 'lodash';
 import {
   customQuerySchema,
   describeTableSchema,
   MetaSchema,
   showTablesSchema,
-  showTagValuesSchema
-} from "./meta_schemas";
+  showTagValuesSchema,
+} from './meta_schemas';
 
 export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSourceOptions> {
   datasourceUid: string;
@@ -42,7 +42,7 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
 
   _fetchMetric(query: string) {
     if (!query) {
-      return of({results: []});
+      return of({ results: [] });
     }
     return this._doRequest(query, 'MetricQuery');
   }
@@ -52,12 +52,14 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
       method: 'POST',
       url: '/api/ds/query',
       data: {
-        queries: [{
-          refId: refId,
-          datasource: {uid: this.datasourceUid},
-          rawQuery: true,
-          queryText: query,
-        }],
+        queries: [
+          {
+            refId: refId,
+            datasource: { uid: this.datasourceUid },
+            rawQuery: true,
+            queryText: query,
+          },
+        ],
       },
     };
 
@@ -65,9 +67,9 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
       .fetch(req)
       .pipe(
         map((result: any) => {
-          const {data} = result;
+          const { data } = result;
           return data;
-        }),
+        })
       );
   }
 
@@ -91,7 +93,11 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
     const stdQuery = query.toUpperCase();
     let ret = new Set<string>();
 
-    const parseResponse = (frame: DataFrameJSON, schema: MetaSchema[], col2Filter: (v: string) => boolean): Set<string> => {
+    const parseResponse = (
+      frame: DataFrameJSON,
+      schema: MetaSchema[],
+      col2Filter: (v: string) => boolean
+    ): Set<string> => {
       let colIndexes: number[] = [];
       for (let col of schema) {
         let indexes = this._parseSchema(frame, col.keys);
@@ -105,7 +111,7 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
         return ret;
       } else if (colIndexes.length === 1) {
         each(values[colIndexes[0]], (v) => {
-          ret.add(v.toString())
+          ret.add(v.toString());
         });
       } else if (colIndexes.length === 2) {
         each(zip(values[colIndexes[0]], values[colIndexes[1]]), ([col1, col2]) => {
@@ -116,39 +122,34 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
       }
 
       return ret;
-    }
+    };
 
     const defaultFilter = (v: string) => true;
 
     if (stdQuery.indexOf('SHOW TABLES') === 0) {
       ret = parseResponse(frame, showTablesSchema, defaultFilter);
-
     } else if (stdQuery.indexOf('-- TAG;\nDESCRIBE TABLE') === 0) {
-      ret = parseResponse(frame, describeTableSchema, (v) => v === "TAG");
-
+      ret = parseResponse(frame, describeTableSchema, (v) => v === 'TAG');
     } else if (stdQuery.indexOf('-- FIELD;\nDESCRIBE TABLE') === 0) {
-      ret = parseResponse(frame, describeTableSchema, (v) => v === "FIELD");
-
+      ret = parseResponse(frame, describeTableSchema, (v) => v === 'FIELD');
     } else if (stdQuery.indexOf('SHOW TAG VALUES') === 0) {
       ret = parseResponse(frame, showTagValuesSchema, defaultFilter);
-
     } else {
       // For customized query variable sql, there is only 1 column named 'value'.
       ret = parseResponse(frame, customQuerySchema, defaultFilter);
-
     }
 
-    return Array.from(ret).map((v) => ({text: v}));
+    return Array.from(ret).map((v) => ({ text: v }));
   }
 
   _parseSchema(frame: DataFrameJSON, fields: string[]): number[] {
     if (!frame.schema?.fields || frame.schema.fields.length === 0) {
-      return []
+      return [];
     }
     const schemaFields = frame.schema.fields;
     const indexes: number[] = [];
     each(fields, (f, i) => {
-      const foundIndex = findIndex(schemaFields, {name: f});
+      const foundIndex = findIndex(schemaFields, { name: f });
       if (foundIndex !== -1) {
         indexes.push(foundIndex);
       }
@@ -217,5 +218,4 @@ export class CnosDataSource extends DataSourceWithBackend<CnosQuery, CnosDataSou
     });
     return tmpTargets;
   }
-
 }

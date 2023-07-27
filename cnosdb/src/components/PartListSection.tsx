@@ -1,12 +1,12 @@
-import {css, cx} from '@emotion/css';
-import React, {useMemo} from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useMemo } from 'react';
 
-import {GrafanaTheme2, SelectableValue} from '@grafana/data';
-import {MenuGroup, MenuItem, useTheme2, WithContextMenu} from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui';
 
-import {toSelectableValue, unwrap} from '../utils';
-import {AddButton} from './AddButton';
-import {Seg} from "./Seg";
+import { toSelectableValue, unwrap } from '../utils';
+import { AddButton } from './AddButton';
+import { Seg } from './Seg';
 
 export type PartParams = Array<{
   value: string;
@@ -27,7 +27,7 @@ type Props = {
 const renderRemovableNameMenuItems = (onClick: () => void) => {
   return (
     <MenuGroup label="">
-      <MenuItem label="remove" onClick={onClick}/>
+      <MenuItem label="remove" onClick={onClick} />
     </MenuGroup>
   );
 };
@@ -37,10 +37,10 @@ const noRightMarginPaddingClass = css({
   marginRight: '0',
 });
 
-const RemovableName = ({name, onRemove}: { name: string; onRemove: () => void }) => {
+const RemovableName = ({ name, onRemove }: { name: string; onRemove: () => void }) => {
   return (
     <WithContextMenu renderMenuItems={() => renderRemovableNameMenuItems(onRemove)}>
-      {({openMenu}) => (
+      {({ openMenu }) => (
         <button className={cx('gf-form-label', noRightMarginPaddingClass)} onClick={openMenu}>
           {name}
         </button>
@@ -76,7 +76,7 @@ const getPartClass = (theme: GrafanaTheme2) => {
   );
 };
 
-const Part = ({name, params, onChange, onRemove}: PartProps): JSX.Element => {
+const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
   const theme = useTheme2();
   const partClass = useMemo(() => getPartClass(theme), [theme]);
 
@@ -87,9 +87,9 @@ const Part = ({name, params, onChange, onRemove}: PartProps): JSX.Element => {
   };
   return (
     <div className={partClass}>
-      <RemovableName name={name} onRemove={onRemove}/>(
+      <RemovableName name={name} onRemove={onRemove} />(
       {params.map((p, i) => {
-        const {value, options} = p;
+        const { value, options } = p;
         const isLast = i === params.length - 1;
         const loadOptions =
           options !== null ? () => options().then((items) => items.map(toSelectableValue)) : undefined;
@@ -134,7 +134,7 @@ export const PartListSection = ({
           }}
         />
       ))}
-      <AddButton loadOptions={getNewPartOptions} onAdd={onAddNewPart}/>
+      <AddButton loadOptions={getNewPartOptions} onAdd={onAddNewPart} />
     </>
   );
 };

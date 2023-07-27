@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {usePrevious} from 'react-use';
+import { useEffect, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 export function useShadowedState<T>(outsideVal: T): [T, (newVal: T) => void] {
   const [currentVal, setCurrentVal] = useState(outsideVal);

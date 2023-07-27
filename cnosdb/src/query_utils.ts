@@ -1,6 +1,6 @@
-import {cloneDeep} from 'lodash';
+import { cloneDeep } from 'lodash';
 
-import {CnosQuery} from './types';
+import { CnosQuery } from './types';
 import CnosQueryModel from './cnosql_query_model';
 
 export function buildRawQuery(query: CnosQuery): string {
@@ -40,7 +40,12 @@ export function removeSelectPart(query: CnosQuery, partIndex: number, index: num
   return model.target;
 }
 
-export function changeSelectPart(query: CnosQuery, listIndex: number, partIndex: number, newParams: string[]): CnosQuery {
+export function changeSelectPart(
+  query: CnosQuery,
+  listIndex: number,
+  partIndex: number,
+  newParams: string[]
+): CnosQuery {
   // we need to make shallow copy of `query.select` down to `query.select[listIndex][partIndex]`
   const newSel = [...(query.select ?? [])];
   newSel[listIndex] = [...newSel[listIndex]];
@@ -48,7 +53,7 @@ export function changeSelectPart(query: CnosQuery, listIndex: number, partIndex:
     ...newSel[listIndex][partIndex],
     params: newParams,
   };
-  return {...query, select: newSel};
+  return { ...query, select: newSel };
 }
 
 export function addNewGroupByPart(query: CnosQuery, type: string): CnosQuery {
@@ -72,5 +77,5 @@ export function changeGroupByPart(query: CnosQuery, partIndex: number, newParams
     ...newGroupBy[partIndex],
     params: newParams,
   };
-  return {...query, groupBy: newGroupBy};
+  return { ...query, groupBy: newGroupBy };
 }

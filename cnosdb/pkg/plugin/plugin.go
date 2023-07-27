@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// Make sure CnosDatasource implements required interfaces. This is important to do
+// Make sure CnosdbDatasource implements required interfaces. This is important to do
 // since otherwise we will only get a not implemented error response from plugin in
 // runtime. In this example datasource instance implements backend.QueryDataHandler,
 // backend.CheckHealthHandler, backend.StreamHandler interfaces. Plugin should not
@@ -29,12 +29,12 @@ import (
 // is useful to clean up resources used by previous datasource instance when a new datasource
 // instance created upon datasource settings changed.
 var (
-	_ backend.QueryDataHandler      = (*CnosDatasource)(nil)
-	_ backend.CheckHealthHandler    = (*CnosDatasource)(nil)
-	_ instancemgmt.InstanceDisposer = (*CnosDatasource)(nil)
+	_ backend.QueryDataHandler      = (*CnosdbDatasource)(nil)
+	_ backend.CheckHealthHandler    = (*CnosdbDatasource)(nil)
+	_ instancemgmt.InstanceDisposer = (*CnosdbDatasource)(nil)
 )
 
-type CnosDataSourceOptions struct {
+type CnosdbDataSourceOptions struct {
 	Url      string `json:"url"`
 	Database string `json:"database"`
 	User     string `json:"user"`
@@ -52,9 +52,9 @@ const (
 	FillNull     = "null"
 )
 
-// NewCnosDatasource creates a new datasource instance.
-func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	var jsonData CnosDataSourceOptions
+// NewCnosdbDatasource creates a new datasource instance.
+func NewCnosdbDatasource(instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	var jsonData CnosdbDataSourceOptions
 	if err := json.Unmarshal(instanceSettings.JSONData, &jsonData); err != nil {
 		return nil, fmt.Errorf("cannot get json data: '%s', please check CnosDB-Grafana-Plugin configurations", err.Error())
 	}
@@ -72,7 +72,7 @@ func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (ins
 		return nil, fmt.Errorf("httpclient new: %w", err)
 	}
 
-	return &CnosDatasource{
+	return &CnosdbDatasource{
 		url:      jsonData.Url,
 		database: jsonData.Database,
 		user:     jsonData.User,
@@ -81,9 +81,9 @@ func NewCnosDatasource(instanceSettings backend.DataSourceInstanceSettings) (ins
 	}, nil
 }
 
-// CnosDatasource is an example datasource which can respond to data queries, reports
+// CnosdbDatasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
-type CnosDatasource struct {
+type CnosdbDatasource struct {
 	url      string
 	database string
 	user     string
@@ -94,8 +94,8 @@ type CnosDatasource struct {
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
 // created. As soon as datasource settings change detected by SDK old datasource instance will
-// be disposed and a new one will be created using NewCnosDatasource factory function.
-func (d *CnosDatasource) Dispose() {
+// be disposed and a new one will be created using NewCnosdbDatasource factory function.
+func (d *CnosdbDatasource) Dispose() {
 	// Clean up datasource instance resources.
 }
 
@@ -103,7 +103,7 @@ func (d *CnosDatasource) Dispose() {
 // req contains the queries []DataQuery (where each query contains RefID as a unique identifier).
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
-func (d *CnosDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (d *CnosdbDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// Create response struct
 	response := backend.NewQueryDataResponse()
 
@@ -119,7 +119,7 @@ func (d *CnosDatasource) QueryData(ctx context.Context, req *backend.QueryDataRe
 	return response, nil
 }
 
-func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
+func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
 	response := backend.DataResponse{}
 
 	var queryModel QueryModel
@@ -289,7 +289,7 @@ func (d *CnosDatasource) query(ctx context.Context, queryContext *backend.QueryD
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *CnosDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (d *CnosdbDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	res, err := d.client.Get(d.url + "/api/v1/ping")
 	if err != nil {
 		return nil, err

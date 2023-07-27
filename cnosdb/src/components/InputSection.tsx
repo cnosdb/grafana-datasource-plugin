@@ -1,9 +1,9 @@
-import {css, cx} from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import {Input} from '@grafana/ui';
+import { Input } from '@grafana/ui';
 
-import {useShadowedState} from './use_shadowed_state';
+import { useShadowedState } from './use_shadowed_state';
 
 type Props = {
   value: string | undefined;
@@ -12,7 +12,7 @@ type Props = {
   placeholder?: string;
 };
 
-export const InputSection = ({value, onChange, isWide, placeholder}: Props): JSX.Element => {
+export const InputSection = ({ value, onChange, isWide, placeholder }: Props): JSX.Element => {
   const [currentValue, setCurrentValue] = useShadowedState(value);
 
   const onBlur = () => {

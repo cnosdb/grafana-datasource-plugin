@@ -1,11 +1,11 @@
-import {filter, find, indexOf, map} from 'lodash';
+import { filter, find, indexOf, map } from 'lodash';
 
-import {ScopedVars} from '@grafana/data';
-import {TemplateSrv} from '@grafana/runtime';
+import { ScopedVars } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
-import {CnosQuery, SelectItem, TagItem} from './types';
-import {QueryPart} from './query_part';
-import {regexEscape} from './utils';
+import { CnosQuery, SelectItem, TagItem } from './types';
+import { QueryPart } from './query_part';
+import { regexEscape } from './utils';
 import queryPart from './cnosql_query_part';
 
 export default class CnosQueryModel {
@@ -26,13 +26,13 @@ export default class CnosQueryModel {
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [
-      {type: 'time', params: ['1 minute']},
-      {type: 'fill', params: ['null']},
+      { type: 'time', params: ['1 minute'] },
+      { type: 'fill', params: ['null'] },
     ];
     target.select = target.select || [
       [
-        {type: 'field', params: ['default_field']},
-        {type: 'avg', params: []},
+        { type: 'field', params: ['default_field'] },
+        { type: 'avg', params: [] },
       ],
     ];
 
@@ -60,7 +60,7 @@ export default class CnosQueryModel {
   updatePersistedParts() {
     this.target.select = map(this.selectModels, (selectParts) => {
       return map(selectParts, (part: any) => {
-        return {type: part.def.type, params: part.params};
+        return { type: part.def.type, params: part.params };
       });
     });
   }
@@ -82,7 +82,7 @@ export default class CnosQueryModel {
 
     const typePart = stringParts[1];
     const arg = stringParts[2];
-    const partModel = queryPart.create({type: typePart, params: [arg]});
+    const partModel = queryPart.create({ type: typePart, params: [arg] });
     const partCount = this.target.groupBy.length;
 
     if (partCount === 0) {
@@ -148,7 +148,7 @@ export default class CnosQueryModel {
   }
 
   addSelectPart(selectParts: any[], type: string) {
-    const partModel = queryPart.create({type: type});
+    const partModel = queryPart.create({ type: type });
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
   }
@@ -287,6 +287,5 @@ export default class CnosQueryModel {
     return conditions.join(' ');
   }
 
-  replace() {
-  }
+  replace() {}
 }

@@ -1,5 +1,5 @@
-import {uniqueId} from 'lodash';
-import React, {PureComponent} from 'react';
+import { uniqueId } from 'lodash';
+import React, { PureComponent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -7,11 +7,11 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import {InlineFormLabel, LegacyForms, LegacyInputStatus} from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, LegacyInputStatus } from '@grafana/ui';
 
-import {CnosDataSourceOptions, CnosSecureJsonData} from '../types';
+import { CnosDataSourceOptions, CnosSecureJsonData } from '../types';
 
-const {Input, SecretFormField} = LegacyForms;
+const { Input, SecretFormField } = LegacyForms;
 
 type ConfigInputProps = {
   label: string;
@@ -21,7 +21,7 @@ type ConfigInputProps = {
   placeholder: string;
 };
 
-const ConfigInput = ({label, htmlPrefix, onChange, value, placeholder}: ConfigInputProps): JSX.Element => {
+const ConfigInput = ({ label, htmlPrefix, onChange, value, placeholder }: ConfigInputProps): JSX.Element => {
   return (
     <div className="gf-form-inline">
       <div className="gf-form">
@@ -29,8 +29,13 @@ const ConfigInput = ({label, htmlPrefix, onChange, value, placeholder}: ConfigIn
           {label}
         </InlineFormLabel>
         <div className="width-20">
-          <Input id={htmlPrefix} className="width-20" value={value || ''} onChange={onChange}
-                 placeholder={placeholder}/>
+          <Input
+            id={htmlPrefix}
+            className="width-20"
+            value={value || ''}
+            onChange={onChange}
+            placeholder={placeholder}
+          />
         </div>
       </div>
     </div>
@@ -55,7 +60,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const {secureJsonFields, jsonData} = this.props.options;
+    const { secureJsonFields, jsonData } = this.props.options;
     const secureJsonData = this.props.options.secureJsonData || {};
     // TODO: use DataSourceHttpSettings to store TLS configs
     return (

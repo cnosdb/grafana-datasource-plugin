@@ -1,6 +1,6 @@
-import {clone, map} from 'lodash';
+import { clone, map } from 'lodash';
 
-import {functionRenderer, QueryPart, QueryPartDef} from './query_part';
+import { functionRenderer, QueryPart, QueryPartDef } from './query_part';
 
 const index: any[] = [];
 const categories: any = {
@@ -16,8 +16,8 @@ const categories: any = {
 function createPart(part: any): any {
   const def = index[part.type];
   if (!def) {
-    console.log("[Error] Unexpected query part", part);
-    throw {message: 'Could not find query part ' + part.type};
+    console.log('[Error] Unexpected query part', part);
+    throw { message: 'Could not find query part ' + part.type };
   }
 
   return new QueryPart(part, def);
@@ -45,7 +45,7 @@ export function timeRenderer(part: any, innerExpr: string) {
   if (part.params[0]) {
     return "DATE_BIN(INTERVAL '" + part.params[0] + "', time, TIMESTAMP '1970-01-01T00:00:00Z')";
   } else {
-    return 'time'
+    return 'time';
   }
 }
 
@@ -103,7 +103,7 @@ function addAliasStrategy(selectParts: any[], partModel: any) {
 function addFieldStrategy(selectParts: any, partModel: any, query: { selectModels: any[][] }) {
   // copy all parts
   const parts = map(selectParts, (part: any) => {
-    return createPart({type: part.def.type, params: clone(part.params)});
+    return createPart({ type: part.def.type, params: clone(part.params) });
   });
 
   query.selectModels.push(parts);
@@ -113,7 +113,7 @@ register({
   type: 'field',
   addStrategy: addFieldStrategy,
   category: categories.Fields,
-  params: [{type: 'field', dynamicLookup: true}],
+  params: [{ type: 'field', dynamicLookup: true }],
   defaultParams: ['default_field'],
   renderer: fieldRenderer,
 });
@@ -218,7 +218,7 @@ register({
 register({
   type: 'tag',
   category: groupByTimeFunctions,
-  params: [{name: 'tag', type: 'string', dynamicLookup: true}],
+  params: [{ name: 'tag', type: 'string', dynamicLookup: true }],
   defaultParams: ['tag'],
   renderer: fieldRenderer,
 });
@@ -227,7 +227,7 @@ register({
   type: 'alias',
   addStrategy: addAliasStrategy,
   category: categories.Aliasing,
-  params: [{name: 'name', type: 'string', quote: 'double'}],
+  params: [{ name: 'name', type: 'string', quote: 'double' }],
   defaultParams: ['alias'],
   renderMode: 'suffix',
   renderer: aliasRenderer,

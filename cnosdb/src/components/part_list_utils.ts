@@ -1,11 +1,11 @@
-import {SelectableValue} from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
-import {QueryPartDef} from '../query_part';
+import { QueryPartDef } from '../query_part';
 import CnosQueryModel from '../cnosql_query_model';
 import queryPart from '../cnosql_query_part';
-import {CnosQuery, SelectItem} from '../types';
-import {toSelectableValue, unwrap} from '../utils';
-import {PartParams} from './PartListSection';
+import { CnosQuery, SelectItem } from '../types';
+import { toSelectableValue, unwrap } from '../utils';
+import { PartParams } from './PartListSection';
 
 type Categories = Record<string, QueryPartDef[]>;
 
@@ -31,7 +31,7 @@ export async function getNewGroupByPartOptions(
   query: CnosQuery,
   getTagKeys: () => Promise<string[]>
 ): Promise<Array<SelectableValue<string>>> {
-  const queryCopy = {...query};
+  const queryCopy = { ...query };
   const model = new CnosQueryModel(queryCopy);
   const options: Array<SelectableValue<string>> = [];
   if (!model.hasFill()) {

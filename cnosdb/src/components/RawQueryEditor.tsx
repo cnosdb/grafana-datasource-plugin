@@ -1,10 +1,10 @@
 import React from 'react';
 
-import {CodeEditor, HorizontalGroup, InlineFormLabel, Input} from '@grafana/ui';
+import { CodeEditor, HorizontalGroup, InlineFormLabel, Input } from '@grafana/ui';
 
-import {CnosQuery} from '../types';
-import {useShadowedState} from './use_shadowed_state';
-import {useUniqueId} from './use_unique_id';
+import { CnosQuery } from '../types';
+import { useShadowedState } from './use_shadowed_state';
+import { useUniqueId } from './use_unique_id';
 
 type Props = {
   query: CnosQuery;
@@ -12,7 +12,7 @@ type Props = {
   onRunQuery: () => void;
 };
 
-export const RawQueryEditor = ({query, onChange, onRunQuery}: Props): JSX.Element => {
+export const RawQueryEditor = ({ query, onChange, onRunQuery }: Props): JSX.Element => {
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
   const aliasElementId = useUniqueId();
 
@@ -30,7 +30,7 @@ export const RawQueryEditor = ({query, onChange, onRunQuery}: Props): JSX.Elemen
       alias: currentAlias,
     });
     onRunQuery();
-  }
+  };
 
   return (
     <div>

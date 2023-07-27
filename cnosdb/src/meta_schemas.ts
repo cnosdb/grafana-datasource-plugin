@@ -8,7 +8,7 @@ export class MetaSchema {
   }
 }
 
-export const showTablesSchema: MetaSchema[] =[
+export const showTablesSchema: MetaSchema[] = [
   {
     cnosdb_version: '2.4',
     keys: ['table_name'],
@@ -16,26 +16,26 @@ export const showTablesSchema: MetaSchema[] =[
   {
     cnosdb_version: '2.3',
     keys: ['Table'],
-  }
+  },
 ];
 
-export const describeTableSchema: MetaSchema[] =[
+export const describeTableSchema: MetaSchema[] = [
   {
     cnosdb_version: '*',
     keys: ['COLUMN_NAME', 'COLUMN_TYPE'],
   },
-]
+];
 
-export const showTagValuesSchema: MetaSchema[] =[
+export const showTagValuesSchema: MetaSchema[] = [
   {
     cnosdb_version: '*',
     keys: ['value'],
   },
-]
+];
 
-export const customQuerySchema: MetaSchema[] =[
+export const customQuerySchema: MetaSchema[] = [
   {
     cnosdb_version: '*',
     keys: ['value'],
-  }
-]
+  },
+];
