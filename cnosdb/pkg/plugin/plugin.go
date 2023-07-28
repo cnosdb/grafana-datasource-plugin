@@ -145,12 +145,7 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadGateway, err.Error())
 	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			log.DefaultLogger.Debug("Failed to close response body", "err", err)
-		}
-	}()
+	defer res.Body.Close()
 
 	// Handle HTTP response
 	respData, err := io.ReadAll(res.Body)
@@ -163,7 +158,6 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 		var errMsg map[string]string
 		respError := fmt.Sprintf("CnosDB returned error status: %s", res.Status)
 		if err := json.NewDecoder(bytes.NewReader(respData)).Decode(&errMsg); err != nil {
-			log.DefaultLogger.Error("Failed to decode request jsonData", "err", err)
 			errStr := fmt.Sprintf("%s. ()Failed to parse response: %s", respError, err)
 			return backend.ErrDataResponse(backend.StatusBadRequest, errStr)
 		}
@@ -175,8 +169,8 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 	var resultNotEmpty = true
 	if len(respData) > 0 {
 		if err := json.NewDecoder(bytes.NewReader(respData)).Decode(&resRows); err != nil {
-			log.DefaultLogger.Error("Failed to decode request jsonData", "err", err)
-			return backend.ErrDataResponse(backend.StatusInternal, err.Error())
+			errStr := fmt.Sprintf("Failed to decode request jsonData: %s", err)
+			return backend.ErrDataResponse(backend.StatusInternal, errStr)
 		}
 	} else {
 		resultNotEmpty = false
@@ -195,8 +189,8 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 				if col == ColumnTime {
 					parsedTime, err := ParseTimeString(val.(string))
 					if err != nil {
-						log.DefaultLogger.Error("Failed to convert to time", "err", err)
-						return backend.ErrDataResponse(backend.StatusInternal, err.Error())
+						errStr := fmt.Sprintf("Failed to convert to time: %s", err.Error())
+						return backend.ErrDataResponse(backend.StatusInternal, errStr)
 					}
 					timeArray[i] = parsedTime
 				} else {
@@ -223,7 +217,8 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 						v := val.(bool)
 						valArr.boolArray[i] = &v
 					default:
-						log.DefaultLogger.Error("Unexpected value type", "value", val, "value_type", valType)
+						// Ignore
+						log.DefaultLogger.Debug("Unexpected value type", "value", val, "value_type", valType)
 					}
 				}
 			}
@@ -243,6 +238,7 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 		case TypeBool:
 			frame.Fields = append(frame.Fields, data.NewField(col, nil, valueArrayMap[col].boolArray))
 		default:
+			// Ignore
 			log.DefaultLogger.Debug("Unexpected column type", "column", col)
 		}
 	}
@@ -261,7 +257,6 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 			fillMode = data.FillModeValue
 			fillValue, err = strconv.ParseFloat(queryModel.Fill, 64)
 			if err != nil {
-				log.DefaultLogger.Error("Failed to convert to float", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to convert fill value to float", Severity: data.NoticeSeverityWarning})
 				return backend.ErrDataResponse(backend.StatusInternal, err.Error())
 			}
@@ -273,7 +268,6 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 				Value: fillValue,
 			})
 			if err != nil {
-				log.DefaultLogger.Error("Failed to Resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to Resample dataframe", Severity: data.NoticeSeverityWarning})
 			}
 		}
