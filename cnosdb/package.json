@@ -1,6 +1,6 @@
 {
   "name": "cnos-cnosdb-datasource",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A grafana data source plugin for CnosDB.",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
