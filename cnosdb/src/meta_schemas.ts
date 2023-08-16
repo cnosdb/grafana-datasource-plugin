@@ -10,11 +10,15 @@ export class MetaSchema {
 
 export const showTablesSchema: MetaSchema[] = [
   {
-    cnosdb_version: '2.4',
+    cnosdb_version: '2.3.3',
+    keys: ['TABLE_NAME'],
+  },
+  {
+    cnosdb_version: '2.3.2',
     keys: ['table_name'],
   },
   {
-    cnosdb_version: '2.3',
+    cnosdb_version: '2.3.1',
     keys: ['Table'],
   },
 ];
