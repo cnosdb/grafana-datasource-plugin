@@ -1,12 +1,33 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 /**
  * These are options configured for each DataSource instance
  */
 export interface CnosDataSourceOptions extends DataSourceJsonData {
-  url?: string;
+  host?: string;
+  port?: number;
   database?: string;
+
+  cnosdbMode?: CnosdbMode;
+  tenant?: string;
+  apiKey?: string;
+
+  useBasicAuth?: boolean;
   user?: string;
+
+  enableHttps?: boolean;
+  skipTlsVerify?: boolean;
+  useCaCert?: boolean;
+  caCert?: string;
+
+  targetPartitions?: number;
+  streamTriggerInterval?: string;
+  useChunkedResponse?: boolean;
+}
+
+export enum CnosdbMode {
+  Private = 0,
+  PublicCloud = 1,
 }
 
 /**
