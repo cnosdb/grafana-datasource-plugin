@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -60,22 +61,20 @@ type CnosdbDataSourceOptions struct {
 	CnosdbMode            CnosdbMode `json:"cnosdbMode"`
 	Tenant                string     `json:"tenant"`
 	ApiKey                string     `json:"apiKey"`
-	UseBasicAuth          bool       `json:"useBasicAuth"`
-	User                  string     `json:"user"`
 	EnableHttps           bool       `json:"enableHttps"`
-	SkipTlsVerify         bool       `json:"skipTlsVerify"`
-	UseCaCert             bool       `json:"useCaCert"`
 	CaCert                string     `json:"caCert"`
 	TargetPartitions      int        `json:"targetPartitions"`
 	StreamTriggerInterval string     `json:"streamTriggerInterval"`
 	UseChunkedResponse    bool       `json:"useChunkedResponse"`
 }
 
-func (c *CnosdbDataSourceOptions) buildCnosdbUrl() string {
+func (c *CnosdbDataSourceOptions) buildCnosdbUrl() (*url.URL, error) {
 	if c.EnableHttps {
-		return fmt.Sprintf("https://%s:%d", c.Host, c.Port)
+		urlStr := fmt.Sprintf("https://%s:%d", c.Host, c.Port)
+		return url.Parse(urlStr)
 	} else {
-		return fmt.Sprintf("http://%s:%d", c.Host, c.Port)
+		urlStr := fmt.Sprintf("http://%s:%d", c.Host, c.Port)
+		return url.Parse(urlStr)
 	}
 }
 
@@ -83,49 +82,54 @@ func (c *CnosdbDataSourceOptions) buildCnosdbUrl() string {
 func NewCnosdbDatasource(instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var dsConfigJsonData CnosdbDataSourceOptions
 	if err := json.Unmarshal(instanceSettings.JSONData, &dsConfigJsonData); err != nil {
-		return nil, fmt.Errorf("cannot get json data: '%s', please check CnosDB-Grafana-Plugin configurations", err.Error())
+		return nil, fmt.Errorf("unmarshal CnosDB datasource configurations as JSON: '%s'", err.Error())
 	}
 
-	url := dsConfigJsonData.buildCnosdbUrl()
-
-	password, exists := instanceSettings.DecryptedSecureJSONData["password"]
-	if !exists {
-		password = ""
-	}
-	opts, err := instanceSettings.HTTPClientOptions()
+	httpOptions, err := instanceSettings.HTTPClientOptions()
 	if err != nil {
-		return nil, fmt.Errorf("http client options: %w", err)
-	}
-	httpClient, err := httpclient.New(opts)
-	if err != nil {
-		return nil, fmt.Errorf("httpclient new: %w", err)
+		return nil, fmt.Errorf("parse http client options: %w", err)
 	}
 
 	var cnosdbApi Api
 	if dsConfigJsonData.CnosdbMode == CnosdbModePublicCloud {
-		cnosdbApi = &CnosdbCloudApi{}
+		// Cloud mode doesn't need those
+		httpOptions.BasicAuth = nil
+		httpOptions.TLS.CACertificate = ""
+		httpOptions.TLS.ClientCertificate = ""
+		httpOptions.TLS.ClientKey = ""
+
+		cnosdbApi, err = NewCnosdbCloudApi(&dsConfigJsonData)
+		if err != nil {
+			return nil, fmt.Errorf("invalid CnosDB cloud API: %w", err)
+		}
 	} else {
-		cnosdbApi = NewCnosdbApi(&dsConfigJsonData)
+		cnosdbApi, err = NewCnosdbApi(&dsConfigJsonData)
+		if err != nil {
+			return nil, fmt.Errorf("invalid CnosDB API: %w", err)
+		}
+	}
+
+	httpClient, err := httpclient.New(httpOptions)
+	if err != nil {
+		return nil, fmt.Errorf("create http client: %w", err)
 	}
 
 	return &CnosdbDatasource{
-		options:  dsConfigJsonData,
-		url:      url,
-		password: password,
-		client:   httpClient,
-		api:      cnosdbApi,
+		options:     dsConfigJsonData,
+		httpOptions: httpOptions,
+		client:      httpClient,
+		api:         cnosdbApi,
 	}, nil
 }
 
 // CnosdbDatasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type CnosdbDatasource struct {
-	options  CnosdbDataSourceOptions
-	url      string
-	password string
+	options CnosdbDataSourceOptions
 
-	client *http.Client
-	api    Api
+	httpOptions httpclient.Options
+	client      *http.Client
+	api         Api
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
@@ -192,24 +196,34 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 
 	if res.StatusCode/100 != 2 {
 		var errMsg map[string]string
-		respError := fmt.Sprintf("CnosDB returned error status: %s", res.Status)
 		if err := json.NewDecoder(bytes.NewReader(respData)).Decode(&errMsg); err != nil {
-			errStr := fmt.Sprintf("%s. ()Failed to parse response: %s", respError, err)
-			log.DefaultLogger.Info(errStr)
-			return backend.ErrDataResponse(backend.StatusBadRequest, errStr)
+			return backend.ErrDataResponse(
+				backend.StatusBadRequest,
+				fmt.Sprintf("Query failed with status '%s', error: Failed to parse response: %s", res.Status, err),
+			)
 		}
-		errStr := fmt.Sprintf("%s. (%s)%s", respError, errMsg["error_code"], errMsg["error_message"])
-		log.DefaultLogger.Info(errStr)
-		return backend.ErrDataResponse(backend.StatusBadRequest, errStr)
+		if error_code, ok := errMsg["error_code"]; ok {
+			return backend.ErrDataResponse(
+				backend.StatusBadRequest,
+				fmt.Sprintf("Query failed with status '%s', error code: %s, error: %s", res.Status, error_code, errMsg["error_message"]),
+			)
+		} else {
+			return backend.ErrDataResponse(
+				backend.StatusBadRequest,
+				fmt.Sprintf("Query failed with status '%s', error: %s", res.Status, errMsg["message"]),
+			)
+		}
+
 	}
 
 	var resRows []map[string]interface{}
 	var resultNotEmpty = true
 	if len(respData) > 0 {
 		if err := json.NewDecoder(bytes.NewReader(respData)).Decode(&resRows); err != nil {
-			errStr := fmt.Sprintf("Failed to decode response jsonData: %s", err)
-			log.DefaultLogger.Info(errStr)
-			return backend.ErrDataResponse(backend.StatusInternal, errStr)
+			return backend.ErrDataResponse(
+				backend.StatusInternal,
+				fmt.Sprintf("Failed to decode response jsonData: %s", err),
+			)
 		}
 	} else {
 		resultNotEmpty = false
@@ -325,33 +339,35 @@ func (d *CnosdbDatasource) query(ctx context.Context, queryContext *backend.Quer
 func (d *CnosdbDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	pingReq, err := d.api.BuildPingRequest(ctx, d)
 	if err != nil {
-		log.DefaultLogger.Info("Failed to build ping request", "err", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to build ping request: %w", err)
 	}
 
 	res, err := d.client.Do(pingReq)
 	if err != nil {
-		log.DefaultLogger.Info("Failed to do ping request", "err", err)
-		return nil, err
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("Ping CnosDB failed: %s", err),
+		}, nil
 	}
 
-	jsonDetails, err := io.ReadAll(res.Body)
+	pingResponse, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.DefaultLogger.Info("Failed to parse ping response", "err", err)
-		return nil, err
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("Ping CnosDB not return anything"),
+		}, nil
 	}
-
 	if res.StatusCode/100 == 2 {
 		return &backend.CheckHealthResult{
 			Status:      backend.HealthStatusOk,
 			Message:     "Data source is working",
-			JSONDetails: jsonDetails,
+			JSONDetails: pingResponse,
 		}, nil
 	} else {
 		return &backend.CheckHealthResult{
 			Status:      backend.HealthStatusError,
-			Message:     "Ping CnosDB returned an error",
-			JSONDetails: jsonDetails,
+			Message:     "Ping CnosDB returned error",
+			JSONDetails: pingResponse,
 		}, nil
 	}
 }

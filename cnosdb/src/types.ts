@@ -12,12 +12,12 @@ export interface CnosDataSourceOptions extends DataSourceJsonData {
   tenant?: string;
   apiKey?: string;
 
-  useBasicAuth?: boolean;
-  user?: string;
+  basicAuth?: boolean;
+  basicAuthUser?: string;
 
   enableHttps?: boolean;
-  skipTlsVerify?: boolean;
-  useCaCert?: boolean;
+  tlsSkipVerify?: boolean;
+  tlsAuthWithCACert?: boolean;
   caCert?: string;
 
   targetPartitions?: number;
@@ -34,7 +34,9 @@ export enum CnosdbMode {
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface CnosSecureJsonData {
-  password?: string;
+  basicAuthPassword?: string;
+
+  tlsCACert?: string;
 }
 
 export interface CnosQuery extends DataQuery {

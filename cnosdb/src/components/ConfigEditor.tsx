@@ -1,4 +1,3 @@
-import { uniqueId } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import {
@@ -10,12 +9,13 @@ import {
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import {
+  Button,
   InlineField,
-  InlineFormLabel,
   InlineSwitch,
   LegacyForms,
   LegacyInputStatus,
   RadioButtonGroup,
+  TextArea,
 } from '@grafana/ui';
 
 import { CnosDataSourceOptions, CnosdbMode, CnosSecureJsonData } from '../types';
@@ -25,23 +25,20 @@ const { Input, SecretFormField } = LegacyForms;
 
 type ConfigInputProps = {
   label: string;
-  htmlPrefix: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;
   value: string | number | undefined;
   placeholder: string;
+  tooltip?: string;
 };
 
-const ConfigInput = ({ label, htmlPrefix, onChange, value, placeholder }: ConfigInputProps): JSX.Element => {
+const ConfigInput = ({ label, onChange, value, placeholder, tooltip }: ConfigInputProps): JSX.Element => {
   return (
     <div className="gf-form-inline">
-      <div className="gf-form">
-        <InlineFormLabel htmlFor={htmlPrefix} className="width-10">
-          {label}
-        </InlineFormLabel>
+      <InlineField label={label} tooltip={tooltip} labelWidth={20}>
         <div className="width-20">
-          <Input id={htmlPrefix} value={value ?? ''} onChange={onChange} placeholder={placeholder} />
+          <Input value={value ?? ''} onChange={onChange} placeholder={placeholder} />
         </div>
-      </div>
+      </InlineField>
     </div>
   );
 };
@@ -57,11 +54,8 @@ const cnosdbModes: Array<SelectableValue<CnosdbMode>> = [
 ];
 
 export class ConfigEditor extends PureComponent<Props, State> {
-  htmlPrefix: string;
-
   constructor(props: Props) {
     super(props);
-    this.htmlPrefix = uniqueId('cnosdb-config');
   }
 
   onResetPassword = () => {
@@ -69,24 +63,25 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { secureJsonFields, jsonData } = this.props.options;
+    const { onOptionsChange, options } = this.props;
+    const { secureJsonFields, jsonData } = options;
     if (jsonData) {
       if (jsonData.cnosdbMode === undefined) {
         jsonData.cnosdbMode = CnosdbMode.Private;
       }
-      if (jsonData.useBasicAuth === undefined) {
-        jsonData.useBasicAuth = true;
+      if (jsonData.basicAuth === undefined) {
+        jsonData.basicAuth = true;
       }
     }
 
     const secureJsonData = this.props.options.secureJsonData || {};
+    const hasTLSCACert = secureJsonFields.tlsCACert;
 
     // TODO: use DataSourceHttpSettings to store TLS configs
     return (
       <>
         <div className="gf-form-group">
           <RadioButtonGroup
-            id={`${this.htmlPrefix}-host-cnosdb-mode`}
             value={jsonData.cnosdbMode}
             options={cnosdbModes}
             onChange={(m) => {
@@ -101,7 +96,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
           <div className="gf-form-inline">
             <InlineField label="Host" labelWidth={10}>
               <Input
-                id={`${this.htmlPrefix}-host`}
                 className="width-12"
                 value={jsonData.host}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'host')}
@@ -110,7 +104,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
             </InlineField>
             <InlineField label="Port" labelWidth={10}>
               <Input
-                id={`${this.htmlPrefix}-port`}
                 type="number"
                 min={0}
                 max={65535}
@@ -126,7 +119,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </div>
           <ConfigInput
             label="Database"
-            htmlPrefix={`${this.htmlPrefix}-database`}
             onChange={onUpdateDatasourceJsonDataOption(this.props, 'database')}
             value={jsonData.database}
             placeholder="public"
@@ -134,7 +126,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
           {jsonData.cnosdbMode === CnosdbMode.PublicCloud && (
             <ConfigInput
               label="API Key"
-              htmlPrefix={`${this.htmlPrefix}-api-key`}
               onChange={onUpdateDatasourceJsonDataOption(this.props, 'apiKey')}
               value={jsonData.apiKey}
               placeholder=""
@@ -143,7 +134,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
           {jsonData.cnosdbMode !== CnosdbMode.PublicCloud && (
             <ConfigInput
               label="Tenant"
-              htmlPrefix={`${this.htmlPrefix}-tenant`}
               onChange={onUpdateDatasourceJsonDataOption(this.props, 'tenant')}
               value={jsonData.tenant}
               placeholder="cnosdb"
@@ -151,107 +141,184 @@ export class ConfigEditor extends PureComponent<Props, State> {
           )}
         </div>
 
-        {jsonData.cnosdbMode === CnosdbMode.Private && (
-          <>
-            <div className="gf-form-group">
-              <h3 className="page-heading">Auth</h3>
-              <div className="gf-form-inline">
-                <InlineField label="Basic Auth" labelWidth={20}>
-                  <InlineSwitch
-                    id={`${this.htmlPrefix}-basic-auth`}
-                    value={jsonData.useBasicAuth}
-                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'useBasicAuth')}
-                  />
-                </InlineField>
-                <InlineField label="SSL" labelWidth={20}>
-                  <InlineSwitch
-                    id={`${this.htmlPrefix}-ssl`}
-                    value={jsonData.enableHttps}
-                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'enableHttps')}
-                  />
-                </InlineField>
-              </div>
-              <div className="gf-form-inline">
-                <InlineField label="With CA Cert" labelWidth={20}>
-                  <InlineSwitch
-                    id={`${this.htmlPrefix}-with-ca-cert`}
-                    value={jsonData.useCaCert}
-                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'useCaCert')}
-                  />
-                </InlineField>
-                <InlineField label="Skip TLS Verify" labelWidth={20}>
-                  <InlineSwitch
-                    id={`${this.htmlPrefix}-skip-tls-verify`}
-                    value={jsonData.skipTlsVerify}
-                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'skipTlsVerify')}
-                  />
-                </InlineField>
+        <div className="gf-form-group">
+          {jsonData.cnosdbMode === CnosdbMode.Private && <h3 className="page-heading">Auth</h3>}
+          {jsonData.cnosdbMode === CnosdbMode.PublicCloud && <h3 className="page-heading">TLS/SSL</h3>}
+          <div className="gf-form-inline">
+            {jsonData.cnosdbMode === CnosdbMode.Private && (
+              <InlineField label="Basic Auth" labelWidth={20}>
+                <InlineSwitch
+                  value={jsonData.basicAuth}
+                  onChange={(event) => {
+                    return updateDatasourcePluginJsonDataOption(this.props, 'basicAuth', event.currentTarget.checked);
+                  }}
+                />
+              </InlineField>
+            )}
+            <InlineField label="SSL" labelWidth={20}>
+              <InlineSwitch
+                value={jsonData.enableHttps}
+                onChange={(event) => {
+                  return updateDatasourcePluginJsonDataOption(this.props, 'enableHttps', event.currentTarget.checked);
+                }}
+              />
+            </InlineField>
+          </div>
+          <div className="gf-form-inline">
+            {jsonData.cnosdbMode === CnosdbMode.Private && (
+              <InlineField label="With CA Cert" labelWidth={20}>
+                <InlineSwitch
+                  value={jsonData.tlsAuthWithCACert}
+                  onChange={(event) => {
+                    return updateDatasourcePluginJsonDataOption(
+                      this.props,
+                      'tlsAuthWithCACert',
+                      event.currentTarget.checked
+                    );
+                  }}
+                />
+              </InlineField>
+            )}
+            <InlineField label="Skip TLS Verify" labelWidth={20}>
+              <InlineSwitch
+                value={jsonData.tlsSkipVerify}
+                onChange={(event) => {
+                  return updateDatasourcePluginJsonDataOption(this.props, 'tlsSkipVerify', event.currentTarget.checked);
+                }}
+              />
+            </InlineField>
+          </div>
+        </div>
+
+        {jsonData.cnosdbMode === CnosdbMode.Private && jsonData.basicAuth && (
+          <div className="gf-form-group">
+            <h3 className="page-heading">Basic Auth Details</h3>
+            <ConfigInput
+              label="User"
+              onChange={onUpdateDatasourceJsonDataOption(this.props, 'basicAuthUser')}
+              value={jsonData.basicAuthUser}
+              placeholder="root"
+            />
+            <div className="gf-form-inline">
+              <div className={cx('gf-form', 'width-30')}>
+                <SecretFormField
+                  isConfigured={Boolean(secureJsonFields && secureJsonFields.password)}
+                  value={secureJsonData.basicAuthPassword}
+                  label="Password"
+                  aria-label="Password"
+                  placeholder="password"
+                  labelWidth={10}
+                  inputWidth={20}
+                  onReset={this.onResetPassword}
+                  onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'password')}
+                />
               </div>
             </div>
+          </div>
+        )}
 
-            {jsonData.useBasicAuth && (
-              <div className="gf-form-group">
-                <h3 className="page-heading">Basic Auth Details</h3>
-                <ConfigInput
-                  label="User"
-                  htmlPrefix={`${this.htmlPrefix}-user`}
-                  onChange={onUpdateDatasourceJsonDataOption(this.props, 'user')}
-                  value={jsonData.user}
-                  placeholder="root"
-                />
-                <div className="gf-form-inline">
-                  <div className={cx('gf-form', 'width-30')}>
-                    <SecretFormField
-                      isConfigured={Boolean(secureJsonFields && secureJsonFields.password)}
-                      value={secureJsonData.password}
-                      label="Password"
-                      aria-label="Password"
-                      placeholder="password"
-                      labelWidth={10}
-                      inputWidth={20}
-                      onReset={this.onResetPassword}
-                      onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'password')}
+        {jsonData.cnosdbMode === CnosdbMode.Private && jsonData.tlsAuthWithCACert && (
+          <div className="gf-form-group">
+            <h3 className="page-heading">TLS/SSL Auth Details</h3>
+            <div className="gf-form-inline">
+              <InlineField label="CA Cert" labelWidth={20}>
+                <div className="width-20">
+                  {hasTLSCACert ? (
+                    <Input type="text" value="configured" disabled={true} />
+                  ) : (
+                    <TextArea
+                      rows={7}
+                      onChange={(event) => {
+                        const newSecureJsonData = secureJsonData;
+                        newSecureJsonData['tlsCACert'] = event.currentTarget.value;
+                        onOptionsChange({
+                          ...options,
+                          secureJsonData: newSecureJsonData,
+                        });
+                        // onUpdateDatasourceSecureJsonDataOption(this.props, 'tlsCACert');
+                      }}
+                      placeholder="Begins with -----BEGIN CERTIFICATE-----"
+                      required
                     />
-                  </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </>
+              </InlineField>
+              {hasTLSCACert && (
+                <Button
+                  variant="secondary"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    const newSecureJsonFields = secureJsonFields;
+                    newSecureJsonFields['tlsCACert'] = false;
+                    onOptionsChange({
+                      ...options,
+                      secureJsonFields: newSecureJsonFields,
+                    });
+                    // updateDatasourcePluginSecureJsonDataOption(this.props, 'tlsCACert', event.currentTarget.value);
+                  }}
+                >
+                  Reset
+                </Button>
+              )}
+            </div>
+          </div>
         )}
 
         <div className="gf-form-group">
           <h3 className="page-heading">General</h3>
-          <InlineField label="Target partitions" labelWidth={20}>
+          <InlineField
+            label="Target partitions"
+            labelWidth={20}
+            tooltip="Number of partitions for query execution. Increasing partitions can increase concurrency"
+          >
             <Input
-              id={`${this.htmlPrefix}-target-partitions`}
               type="number"
               min={0}
               max={65535}
               step={1}
               className="width-10"
               value={jsonData.targetPartitions}
-              onChange={onUpdateDatasourceJsonDataOption(this.props, 'targetPartitions')}
+              onChange={(event) => {
+                let v = parseInt(event.currentTarget.value, 10);
+                if (!Number.isFinite(v)) {
+                  if (v < 0) {
+                    v = 0;
+                  } else if (v > 65535) {
+                    v = 65535;
+                  }
+                }
+                updateDatasourcePluginJsonDataOption(
+                  this.props,
+                  'targetPartitions',
+                  Number.isFinite(v) ? v : undefined
+                );
+              }}
               placeholder=""
             />
           </InlineField>
-          <InlineField label="Stream trigger interval" labelWidth={20}>
+          <InlineField
+            label="Stream trigger interval"
+            labelWidth={20}
+            tooltip="Optionally, specify the micro batch stream trigger interval. e.g. once, 1m, 10s"
+          >
             <Input
-              id={`${this.htmlPrefix}-stream-trigger-interval`}
-              type="number"
-              min={0}
-              max={65535}
-              step={1}
+              type="text"
               className="width-10"
               value={jsonData.streamTriggerInterval}
               onChange={onUpdateDatasourceJsonDataOption(this.props, 'streamTriggerInterval')}
               placeholder=""
             />
           </InlineField>
-          <InlineField label="Chuncked" labelWidth={20}>
+          <InlineField label="Chuncked" labelWidth={20} tooltip="Whether to use chunked response to get query results.">
             <InlineSwitch
-              id={`${this.htmlPrefix}-use-chunked-response`}
               value={jsonData.useChunkedResponse}
-              onChange={onUpdateDatasourceJsonDataOption(this.props, 'useChunkedResponse')}
+              onChange={(event) => {
+                return updateDatasourcePluginJsonDataOption(
+                  this.props,
+                  'useChunkedResponse',
+                  event.currentTarget.checked
+                );
+              }}
             />
           </InlineField>
         </div>
