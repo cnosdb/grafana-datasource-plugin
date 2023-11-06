@@ -12,7 +12,7 @@ type Props = {
   placeholder?: string;
 };
 
-export const InputSection = ({ value, onChange, isWide, placeholder }: Props): JSX.Element => {
+export const InputSection = ({ value, onChange, isWide, placeholder }: Props): React.JSX.Element => {
   const [currentValue, setCurrentValue] = useShadowedState(value);
 
   const onBlur = () => {

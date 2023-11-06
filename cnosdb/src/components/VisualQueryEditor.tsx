@@ -30,7 +30,7 @@ type Props = {
   datasource: CnosDataSource;
 };
 
-export const VisualQueryEditor = (props: Props): JSX.Element => {
+export const VisualQueryEditor = (props: Props): React.JSX.Element => {
   const styles = useStyles2((theme: GrafanaTheme2) => {
     return {
       inlineLabel: css`

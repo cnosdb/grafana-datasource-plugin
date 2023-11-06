@@ -10,7 +10,7 @@ type FromSectionProps = {
 };
 
 // TODO Use <select/> to get FROM table.
-export const FromSection = ({ table, onChange, getTableOptions }: FromSectionProps): JSX.Element => {
+export const FromSection = ({ table, onChange, getTableOptions }: FromSectionProps): React.JSX.Element => {
   const loadFromOptions = async (filter: string) => {
     const tables = await getTableOptions(filter);
     return tables.map(toSelectableValue);

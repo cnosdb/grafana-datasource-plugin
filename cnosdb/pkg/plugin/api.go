@@ -11,10 +11,17 @@ import (
 )
 
 type Api interface {
+	Url() url.URL
+
 	BuildQueryRequest(ctx context.Context, datasource *CnosdbDatasource, sql string) (*http.Request, error)
 
 	BuildPingRequest(ctx context.Context, datasource *CnosdbDatasource) (*http.Request, error)
 }
+
+var (
+	_ Api = (*CnosdbApi)(nil)
+	_ Api = (*CnosdbCloudApi)(nil)
+)
 
 type CnosdbApi struct {
 	queryUrl *url.URL
@@ -47,6 +54,10 @@ func NewCnosdbApi(options *CnosdbDataSourceOptions) (*CnosdbApi, error) {
 	return &CnosdbApi{
 		queryUrl: queryUrl,
 	}, nil
+}
+
+func (c *CnosdbApi) Url() url.URL {
+	return *c.queryUrl
 }
 
 func (c *CnosdbApi) BuildQueryRequest(ctx context.Context, d *CnosdbDatasource, sql string) (*http.Request, error) {
@@ -96,6 +107,10 @@ func NewCnosdbCloudApi(options *CnosdbDataSourceOptions) (*CnosdbCloudApi, error
 	return &CnosdbCloudApi{
 		queryUrl: queryUrl,
 	}, nil
+}
+
+func (c *CnosdbCloudApi) Url() url.URL {
+	return *c.queryUrl
 }
 
 func (c *CnosdbCloudApi) BuildQueryRequest(ctx context.Context, d *CnosdbDatasource, sql string) (*http.Request, error) {

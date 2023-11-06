@@ -31,7 +31,7 @@ type ConfigInputProps = {
   tooltip?: string;
 };
 
-const ConfigInput = ({ label, onChange, value, placeholder, tooltip }: ConfigInputProps): JSX.Element => {
+const ConfigInput = ({ label, onChange, value, placeholder, tooltip }: ConfigInputProps): React.JSX.Element => {
   return (
     <div className="gf-form-inline">
       <InlineField label={label} tooltip={tooltip} labelWidth={20}>
@@ -297,7 +297,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             />
           </InlineField>
           <InlineField
-            label="Stream trigger interval"
+            label="Stream trigger"
             labelWidth={20}
             tooltip="Optionally, specify the micro batch stream trigger interval. e.g. once, 1m, 10s"
           >

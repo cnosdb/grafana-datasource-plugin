@@ -11,7 +11,7 @@ type Props = {
   onAdd: (v: string) => void;
 };
 
-export const AddButton = ({ loadOptions, allowCustomValue, onAdd }: Props): JSX.Element => {
+export const AddButton = ({ loadOptions, allowCustomValue, onAdd }: Props): React.JSX.Element => {
   return (
     <Seg
       value="+"

@@ -26,7 +26,7 @@ type Props = {
 };
 
 // TODO Use <select/> to get Tag Value filters.
-export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptions }: Props): JSX.Element => {
+export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptions }: Props): React.JSX.Element => {
   const onTagChange = (newTag: TagItem, index: number) => {
     const newTags = tags.map((tag, i) => {
       return index === i ? newTag : tag;
@@ -96,7 +96,14 @@ type TagProps = {
   getTagValueOptions: (key: string) => Promise<string[]>;
 };
 
-const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions }: TagProps): JSX.Element => {
+const Tag = ({
+  tag,
+  isFirst,
+  onRemove,
+  onChange,
+  getTagKeyOptions,
+  getTagValueOptions,
+}: TagProps): React.JSX.Element => {
   const operator = getOperator(tag);
   const condition = getCondition(tag, isFirst);
 

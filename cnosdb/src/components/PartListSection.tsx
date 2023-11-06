@@ -76,7 +76,7 @@ const getPartClass = (theme: GrafanaTheme2) => {
   );
 };
 
-const Part = ({ name, params, onChange, onRemove }: PartProps): JSX.Element => {
+const Part = ({ name, params, onChange, onRemove }: PartProps): React.JSX.Element => {
   const theme = useTheme2();
   const partClass = useMemo(() => getPartClass(theme), [theme]);
 
@@ -118,7 +118,7 @@ export const PartListSection = ({
   onAddNewPart,
   onRemovePart,
   onChange,
-}: Props): JSX.Element => {
+}: Props): React.JSX.Element => {
   return (
     <>
       {parts.map((part, index) => (

@@ -29,7 +29,7 @@ type Props = {
 // > Tag $tag: $column in TagOptions
 // > $order: > [ ascending, descending ]
 //   => sql: order by $tag $order
-export const OrderByTimeSection = ({ value, onChange }: Props): JSX.Element => {
+export const OrderByTimeSection = ({ value, onChange }: Props): React.JSX.Element => {
   return (
     <>
       <Select<Mode>

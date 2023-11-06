@@ -61,42 +61,58 @@ type CnosdbDataSourceOptions struct {
 	CnosdbMode            CnosdbMode `json:"cnosdbMode"`
 	Tenant                string     `json:"tenant"`
 	ApiKey                string     `json:"apiKey"`
-	EnableHttps           bool       `json:"enableHttps"`
-	CaCert                string     `json:"caCert"`
 	TargetPartitions      int        `json:"targetPartitions"`
 	StreamTriggerInterval string     `json:"streamTriggerInterval"`
 	UseChunkedResponse    bool       `json:"useChunkedResponse"`
+
+	EnableHttps bool `json:"enableHttps"`
+
+	// TLS options in JSON config, copied from <grafana>/backend/http_settings.go
+	// DataSourceInstanceSettings.HTTPClientOptions() uses these options.
+
+	TlsSKipVerify     bool   `json:"tlsSkipVerify"`
+	TlsAuthWithCaCert bool   `json:"tlsAuthWithCACert"`
+	CaCert            string `json:"caCert"`
 }
 
 func (c *CnosdbDataSourceOptions) buildCnosdbUrl() (*url.URL, error) {
+	var port = c.Port
 	if c.EnableHttps {
+		if port == 0 {
+			port = 443
+		}
 		urlStr := fmt.Sprintf("https://%s:%d", c.Host, c.Port)
 		return url.Parse(urlStr)
 	} else {
+		if port == 0 {
+			port = 80
+		}
 		urlStr := fmt.Sprintf("http://%s:%d", c.Host, c.Port)
 		return url.Parse(urlStr)
 	}
 }
 
 // NewCnosdbDatasource creates a new datasource instance.
-func NewCnosdbDatasource(instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewCnosdbDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var dsConfigJsonData CnosdbDataSourceOptions
-	if err := json.Unmarshal(instanceSettings.JSONData, &dsConfigJsonData); err != nil {
+	if err := json.Unmarshal(settings.JSONData, &dsConfigJsonData); err != nil {
 		return nil, fmt.Errorf("unmarshal CnosDB datasource configurations as JSON: '%s'", err.Error())
 	}
 
-	httpOptions, err := instanceSettings.HTTPClientOptions()
+	httpOptions, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("parse http client options: %w", err)
 	}
 
 	var cnosdbApi Api
 	if dsConfigJsonData.CnosdbMode == CnosdbModePublicCloud {
-		// Cloud mode doesn't need those
+		// Cloud mode doesn't need those options
 		httpOptions.BasicAuth = nil
-		httpOptions.TLS.CACertificate = ""
-		httpOptions.TLS.ClientCertificate = ""
-		httpOptions.TLS.ClientKey = ""
+		if httpOptions.TLS != nil {
+			httpOptions.TLS.CACertificate = ""
+			httpOptions.TLS.ClientCertificate = ""
+			httpOptions.TLS.ClientKey = ""
+		}
 
 		cnosdbApi, err = NewCnosdbCloudApi(&dsConfigJsonData)
 		if err != nil {

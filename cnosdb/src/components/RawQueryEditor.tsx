@@ -12,7 +12,7 @@ type Props = {
   onRunQuery: () => void;
 };
 
-export const RawQueryEditor = ({ query, onChange, onRunQuery }: Props): JSX.Element => {
+export const RawQueryEditor = ({ query, onChange, onRunQuery }: Props): React.JSX.Element => {
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
   const aliasElementId = useUniqueId();
 
